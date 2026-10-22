@@ -13,6 +13,7 @@ import json
 import logging
 import os
 import re
+import sys
 import threading
 from typing import Any
 
@@ -122,6 +123,25 @@ def _resolve_endpoint_config(provider: str) -> tuple[str | None, str | None]:
     return api_base, api_key
 
 
+_CONNECTION_ERROR_NAMES = frozenset({"ConnectError", "ConnectTimeout", "APIConnectionError"})
+
+
+def _is_connection_error(exc: BaseException) -> bool:
+    """例外連鎖のどこかに「サーバへ接続できなかった」例外があるかを判定する。
+
+    LiteLLM は接続失敗を ``InternalServerError`` 等に包み直すため、
+    ``__cause__`` / ``__context__`` をたどって根本の例外を見る。
+    """
+    seen: set[int] = set()
+    cur: BaseException | None = exc
+    while cur is not None and id(cur) not in seen:
+        seen.add(id(cur))
+        if isinstance(cur, ConnectionError) or type(cur).__name__ in _CONNECTION_ERROR_NAMES:
+            return True
+        cur = cur.__cause__ or cur.__context__
+    return False
+
+
 class AIClient:
     """LiteLLM / google.genai 統一クライアント（シングルトン）。"""
 
@@ -180,7 +200,7 @@ class AIClient:
                 return self._generate_json_litellm(prompt, method_name)
             return self._generate_json_genai(prompt, method_name)
         except Exception:
-            logger.exception("AI generate_json failed (%s)", method_name)
+            self._log_failure("generate_json", method_name)
             return None
 
     def generate_json_with_image(
@@ -214,8 +234,28 @@ class AIClient:
                 return self._generate_image_litellm(prompt, images, method_name)
             return self._generate_image_genai(prompt, images, method_name)
         except Exception:
-            logger.exception("AI generate_json_with_images failed (%s)", method_name)
+            self._log_failure("generate_json_with_images", method_name)
             return None
+
+    def _log_failure(self, api_name: str, method_name: str) -> None:
+        """AI 呼び出しの失敗をログに残す（except 節の中から呼ぶこと）。
+
+        接続できなかった場合は、原因の切り分けに要る接続先を 1 行で出し、
+        トレースバックは DEBUG レベルに落とす（呼び出しごとに数十行並ぶのを防ぐ）。
+        """
+        if _is_connection_error(sys.exc_info()[1] or Exception()):
+            logger.warning(
+                "AI %s failed (%s): cannot connect to %s (model=%s). "
+                "Check that the LLM server is running and reachable from this process "
+                "(inside Docker, 'localhost' is the container itself).",
+                api_name,
+                method_name,
+                self._api_base or f"the default endpoint of provider '{self._provider}'",
+                self._get_litellm_model_id() if self._backend == "litellm" else self._model,
+            )
+            logger.debug("Connection failure detail", exc_info=True)
+            return
+        logger.exception("AI %s failed (%s)", api_name, method_name)
 
     # ─── バックエンド検出 ──────────────────────────────────────
 
@@ -317,6 +357,9 @@ class AIClient:
             litellm のレスポンスオブジェクト。
         """
         import litellm
+
+        # 失敗のたびに標準出力へ出る "Give Feedback / Get Help" の案内を抑止する
+        litellm.suppress_debug_info = True
 
         kwargs: dict[str, Any] = {
             "model": model_id,

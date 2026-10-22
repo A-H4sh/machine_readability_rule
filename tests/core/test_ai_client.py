@@ -244,3 +244,75 @@ class Test_openai_compatible_endpoint:
 
         assert AIClient().generate_json("p", method_name="t") == {"ok": True}
         assert "response_format" not in calls[0]
+
+
+class Test_connection_failure_logging:
+    """接続失敗時のログ（接続先を 1 行で出し、トレースバックは出さない）のテスト。"""
+
+    @pytest.fixture(autouse=True)
+    def _clean_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        for name in _ENDPOINT_ENV_VARS:
+            monkeypatch.delenv(name, raising=False)
+
+    def _patch(self, monkeypatch: pytest.MonkeyPatch, exc_factory) -> None:  # noqa: ANN001
+        import sys
+        import types
+
+        def fake(**kwargs):  # noqa: ANN003, ANN202
+            raise exc_factory()
+
+        module = types.ModuleType("litellm")
+        module.completion = fake  # type: ignore[attr-defined]
+        monkeypatch.setitem(sys.modules, "litellm", module)
+
+    @staticmethod
+    def _wrapped_refused() -> Exception:
+        # LiteLLM が接続拒否を InternalServerError に包み直す形を再現する
+        class InternalServerError(Exception):
+            pass
+
+        try:
+            try:
+                raise ConnectionRefusedError(111, "Connection refused")
+            except ConnectionRefusedError as e:
+                raise InternalServerError("OpenAIException - Connection error.") from e
+        except InternalServerError as wrapped:
+            return wrapped
+
+    def test_接続拒否は接続先URLを含む1行の警告になる(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        import logging
+
+        monkeypatch.setenv("HARUNOBU_AI_PROVIDER", "openai")
+        monkeypatch.setenv("HARUNOBU_AI_API_BASE", "http://localhost:11434/v1")
+        monkeypatch.setenv("HARUNOBU_AI_MODEL", "qwen2.5:7b")
+        self._patch(monkeypatch, self._wrapped_refused)
+
+        with caplog.at_level(logging.INFO, logger="harunobu.core.ai_client"):
+            assert AIClient().generate_json("p", method_name="check_abbreviations") is None
+            assert AIClient().generate_json_with_image("p", b"x", method_name="visual") is None
+
+        failures = [r for r in caplog.records if "failed" in r.getMessage()]
+        assert len(failures) == 2
+        for r in failures:
+            assert r.levelno == logging.WARNING
+            assert "http://localhost:11434/v1" in r.getMessage()
+            assert "openai/qwen2.5:7b" in r.getMessage()
+            assert r.exc_info is None
+
+    def test_接続以外のエラーは従来どおりトレースバック付き(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        import logging
+
+        monkeypatch.setenv("HARUNOBU_AI_PROVIDER", "openai")
+        self._patch(monkeypatch, lambda: ValueError("authentication failed"))
+
+        with caplog.at_level(logging.INFO, logger="harunobu.core.ai_client"):
+            assert AIClient().generate_json("p", method_name="m") is None
+
+        failures = [r for r in caplog.records if "failed" in r.getMessage()]
+        assert len(failures) == 1
+        assert failures[0].levelno == logging.ERROR
+        assert failures[0].exc_info is not None
