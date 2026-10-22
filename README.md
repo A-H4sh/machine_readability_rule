@@ -57,7 +57,7 @@ JSON 形式の場合は違反箇所の数に関わらず、全ての違反箇所
 
 利用にあたって必要なライブラリなどの詳細情報は [THIRD-PARTY-NOTICE.txt](./THIRD-PARTY-NOTICE.txt) を参照してください。
 
-> AI補完機能を有効にする場合は、Gemini / OpenAI / Anthropic 等のマルチプロバイダーに対応した API キー（または Vertex AI 環境）が必要です。詳しくは [AI設定ガイド](docs/guides/ai-configuration.md) を参照してください。
+> AI補完機能を有効にする場合は、Gemini / OpenAI / Anthropic 等のマルチプロバイダーに対応した API キー（または Vertex AI 環境）が必要です。Ollama / vLLM / LM Studio 等の OpenAI 互換サーバで動かすローカルLLMも利用できます（[ローカルLLMで AI 補完を使う](#ローカルllmで-ai-補完を使う)）。詳しくは [AI設定ガイド](docs/guides/ai-configuration.md) を参照してください。
 
 pythonのパッケージマネージャーは `uv` を使用しています。
 uvのインストール方法についてはuv公式のスタンドアロンインストーラーを利用してのインストールを推奨しています。
@@ -95,6 +95,46 @@ http://localhost:8080 でアクセス。
 uv sync --extra ui
 uv run streamlit run app.py
 ```
+
+### ローカルLLMで AI 補完を使う
+
+Ollama / vLLM / LM Studio / llama.cpp server など、OpenAI 互換 API を提供するサーバに接続先を切り替えられます。API キーが不要なサーバでは `HARUNOBU_AI_API_KEY` を省略できます。
+
+1. ローカルLLMサーバを起動し、モデルを用意します（例: `ollama pull qwen2.5:7b`）。
+2. `.env` に以下を設定します（`cp .env.example .env` してから編集）。値の後ろにコメントを書くと値の一部として読まれることがあるため、コメントは別の行に書いてください。
+
+```
+HARUNOBU_AI_PROVIDER=openai
+# Ollama の例（vLLM は :8000、LM Studio は :1234）
+HARUNOBU_AI_API_BASE=http://localhost:11434/v1
+# サーバ側のモデル名をそのまま指定
+HARUNOBU_AI_MODEL=qwen2.5:7b
+# キーが必要なサーバのみ
+# HARUNOBU_AI_API_KEY=...
+# response_format 非対応のサーバ（LM Studio 等）のみ
+# HARUNOBU_AI_JSON_MODE=0
+```
+
+3. `.env` を読み込ませて起動します（Harunobu 自身は `.env` を自動では読み込みません）。
+
+```bash
+# ローカルから（AI 用の依存を含めてインストール）
+uv sync --extra ui --extra ai
+uv run --env-file .env streamlit run app.py
+```
+
+Docker から起動する場合は、コンテナ内の `localhost` はコンテナ自身を指すため、ホスト上のLLMサーバへは `host.docker.internal` で接続します。
+
+```bash
+docker build -t harunobu .
+docker run -p 8080:8080 --add-host=host.docker.internal:host-gateway \
+  -e HARUNOBU_AI_PROVIDER=openai \
+  -e HARUNOBU_AI_API_BASE=http://host.docker.internal:11434/v1 \
+  -e HARUNOBU_AI_MODEL=qwen2.5:7b \
+  harunobu
+```
+
+接続先が反映されているかは、起動時のログに出る `AIClient backend=litellm ... api_base=...` の行で確認できます。画像を使う判定（AIVisualAnalyzer）にはビジョン対応モデルが必要です。詳しくは [AI設定ガイド](docs/guides/ai-configuration.md#2c-openai互換エンドポイントローカルllmを使用する場合) を参照してください。
 
 ### Streamlit UI 動作フロー
 

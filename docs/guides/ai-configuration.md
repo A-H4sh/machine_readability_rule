@@ -131,13 +131,15 @@ LiteLLM が必要です（`uv sync --extra ai`）。`HARUNOBU_AI_PROVIDER=openai
 
 ```
 HARUNOBU_AI_PROVIDER=openai
-HARUNOBU_AI_API_BASE=http://localhost:11434/v1   # Ollama
-# HARUNOBU_AI_API_BASE=http://localhost:8000/v1  # vLLM
-# HARUNOBU_AI_API_BASE=http://localhost:1234/v1  # LM Studio
-# HARUNOBU_AI_API_BASE=http://localhost:8080/v1  # llama.cpp server
-HARUNOBU_AI_MODEL=qwen2.5:7b                      # サーバ側のモデル名をそのまま
-# HARUNOBU_AI_API_KEY=...                         # キー不要なサーバなら省略可
+# Ollama（vLLM: http://localhost:8000/v1 / LM Studio: http://localhost:1234/v1 / llama.cpp server: http://localhost:8080/v1）
+HARUNOBU_AI_API_BASE=http://localhost:11434/v1
+# サーバ側のモデル名をそのまま指定
+HARUNOBU_AI_MODEL=qwen2.5:7b
+# キー不要なサーバなら省略可
+# HARUNOBU_AI_API_KEY=...
 ```
+
+Harunobu は `.env` を自動では読み込まないため、`uv run --env-file .env streamlit run app.py` のように読み込ませて起動してください。値の後ろにコメントを書くと値の一部として読まれることがあるため、コメントは別の行に書きます。
 
 注意点:
 
