@@ -1,0 +1,1780 @@
+<title>Harunobu LLM入力サンプル</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=BIZ+UDGothic:wght@400;700&family=Zen+Kaku+Gothic+New:wght@700&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with wide code panes that scroll on their own; a call-site table up front, then one section per method. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #1d2433;
+  --muted: #5b6475;
+  --line: #d9dde5;
+  --accent: #2c4f86;
+  --code-bg: #eef1f6;
+  --ctx-ink: #8a93a3;
+  --dat-bg: #fff1c7;
+  --dat-ink: #3d2f00;
+  --ok-bg: #e2f2e6; --ok-ink: #1f6131;
+  --warn-bg: #fdf0d8; --warn-ink: #7a4b00;
+  --bad-bg: #fbe3e1; --bad-ink: #8f1f17;
+  --f-display: "Zen Kaku Gothic New", "BIZ UDPGothic", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --f-body: "BIZ UDPGothic", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --f-code: "BIZ UDGothic", "Osaka-Mono", "MS Gothic", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161d; --surface: #1a2029; --ink: #e3e7ee; --muted: #9aa3b2; --line: #2e3643;
+    --accent: #8fb2ea; --code-bg: #161b23; --ctx-ink: #6e7787; --dat-bg: #4a3b0c; --dat-ink: #ffe6a3;
+    --ok-bg: #173523; --ok-ink: #9fe0b1; --warn-bg: #3d2d0c; --warn-ink: #f3cf86; --bad-bg: #42191a; --bad-ink: #f4aaa3;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161d; --surface: #1a2029; --ink: #e3e7ee; --muted: #9aa3b2; --line: #2e3643;
+  --accent: #8fb2ea; --code-bg: #161b23; --ctx-ink: #6e7787; --dat-bg: #4a3b0c; --dat-ink: #ffe6a3;
+  --ok-bg: #173523; --ok-ink: #9fe0b1; --warn-bg: #3d2d0c; --warn-ink: #f3cf86; --bad-bg: #42191a; --bad-ink: #f4aaa3;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.75; }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 40px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 40px; }
+.wrap > * { min-width: 0; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.35; margin: 0; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.35rem; padding-bottom: 6px; border-bottom: 2px solid var(--ink); }
+h3 { font-size: 1.1rem; }
+h3 code { font-family: var(--f-code); font-size: 1.02rem; }
+h4 { font-size: .9rem; margin: 18px 0 4px; color: var(--muted); letter-spacing: .04em; }
+p { margin: 0; max-width: 72ch; }
+a { color: var(--accent); }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code { font-family: var(--f-code); font-size: .9em; }
+.lede { display: grid; gap: 12px; }
+.eyebrow { font-size: .78rem; letter-spacing: .12em; color: var(--muted); }
+.block { display: grid; gap: 14px; }
+.callout { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--bad-ink); padding: 14px 16px; border-radius: 4px; display: grid; gap: 8px; }
+.callout.info { border-left-color: var(--accent); }
+.callout ul { margin: 0; padding-left: 1.2em; }
+.tbl { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 700; color: var(--muted); font-size: .8rem; letter-spacing: .04em; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td code { white-space: nowrap; }
+.pill { display: inline-block; font-size: .76rem; padding: 1px 8px; border-radius: 999px; white-space: nowrap; font-weight: 700; }
+.pill.real { background: var(--ok-bg); color: var(--ok-ink); }
+.pill.direct { background: var(--warn-bg); color: var(--warn-ink); }
+.pill.fail { background: var(--bad-bg); color: var(--bad-ink); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: .85rem; color: var(--muted); }
+.pre-wrap { overflow-x: auto; background: var(--code-bg); border: 1px solid var(--line); border-radius: 4px; }
+pre { margin: 0; padding: 14px 16px; font-family: var(--f-code); font-size: .82rem; line-height: 1.65; white-space: pre; tab-size: 2; }
+.ctx { color: var(--ctx-ink); }
+.dat { background: var(--dat-bg); color: var(--dat-ink); }
+.method { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 20px; display: grid; gap: 12px; min-width: 0; }
+.method > * { min-width: 0; }
+.mh { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.purpose { font-size: .98rem; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 20px; margin: 0; }
+.facts div { min-width: 0; }
+.facts dt { font-size: .75rem; color: var(--muted); letter-spacing: .06em; }
+.facts dd { margin: 0; font-size: .9rem; overflow-wrap: anywhere; }
+details > summary { cursor: pointer; color: var(--accent); font-size: .9rem; padding: 4px 0; }
+details.long[open] > summary, details.vars[open] > summary { margin-bottom: 8px; }
+.varlist { margin: 0; padding-left: 1.4em; display: grid; gap: 10px; }
+.varlist li { min-width: 0; }
+.varlist .src { font-size: .8rem; color: var(--muted); font-family: var(--f-code); }
+.varlist pre { background: var(--code-bg); border-radius: 4px; overflow-x: auto; padding: 8px 10px; }
+.hint { font-size: .82rem; color: var(--muted); margin-bottom: 8px; }
+.notes { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; font-size: .9rem; }
+.expect code { white-space: normal; overflow-wrap: anywhere; }
+.cite { font-size: .78rem; color: var(--muted); font-family: var(--f-code); }
+.imgrow { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.imgrow figure { margin: 0; }
+.imgrow img { width: 100%; max-width: 100%; border: 1px solid var(--line); background: #fff; display: block; }
+.imgrow figcaption { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+.imgmeta { display: grid; gap: 6px; font-size: .88rem; overflow-wrap: anywhere; }
+.sample-key { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .82rem; color: var(--muted); }
+.sample-key span { font-family: var(--f-code); padding: 0 6px; border-radius: 3px; }
+.toc { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .85rem; }
+@media (max-width: 640px) {
+  h1 { font-size: 1.55rem; }
+  .imgrow { grid-template-columns: 1fr; }
+  .method { padding: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+<div class="wrap">
+
+<header class="lede">
+  <div class="eyebrow">machine_readability_rule · harunobu · LLM 呼び出しの実物</div>
+  <h1>Harunobu が LLM に送っているもの</h1>
+  <p>ルールエンジン Harunobu は、決定論的なルールで判断しきれない箇所だけを LLM に問い合わせます。このページは、その問い合わせを<b>実際に送信された HTTP リクエストのまま</b>集めたものです。読み取ったコードから書き起こしたものではありません。</p>
+  <p>取得方法: Docker コンテナ内に OpenAI 互換のモックサーバを立て、<code>HARUNOBU_AI_PROVIDER=openai</code> と <code>HARUNOBU_AI_API_BASE</code> をそこに向けて、<code>tests/sample_by_mr_rules/samples/</code> の xlsx / csv 35 ファイルを <code>Analyzer(mode="thorough")</code> で解析しました（うち 1 ファイルは拡張子偽装の検出で読み込み段階で拒否）。ルールから呼ばれなかったメソッドは、サンプルの実データを入れて直接呼び出しています。対象コード: main <code>23665d8</code>。</p>
+</header>
+
+<section class="block">
+  <h2>まず結論</h2>
+  <div class="callout info">
+    <ul>
+      <li><b>表全体は送っていません。</b>送るのはヘッダー文字列、1 列分の値（最大 50 件）、ユニーク値一覧、問題のありそうなセル値だけです。行全体を送るのは L3-09 の先頭 3 行だけです。</li>
+      <li><b>表データは CSV や JSON ではなく、日本語の文の中に埋め込んだテキスト</b>です。たとえば <code>[0] ヘッダー: 「数値1」, サンプル値: 12.4, 18.9, 25, 9.6</code>、<code>行3: '北海道'</code>、<code>'北海道', '青森県'</code>、<code>a | b | c</code> など、メソッドごとに書式が違います。</li>
+      <li>プロンプトはすべて日本語です。system メッセージは使わず、<b>user メッセージ 1 通</b>に指示・データ・JSON の回答例をまとめています。半数以上のメソッドは先頭に共通の「行政データのエキスパートです」という前置き（このページでは薄い色で表示）が付きます。</li>
+      <li>送信パラメータは全件同じで、<code>temperature: 0.1</code> と <code>response_format: {"type": "json_object"}</code> です。ただし、多くのプロンプトは<b>配列</b>（<code>[...]</code>）での回答を求めています。json_object モードはトップレベルがオブジェクトであることを前提にするプロバイダが多いので、本物のモデルでは衝突する可能性があります（モックでは検証できないため推定）。</li>
+      <li>今回の thorough 解析で実際に送られたのは <b>224 リクエスト</b>で、すべてテキストのみでした。画像を使う L1-05 / L1-11 は 185 回呼ばれましたが、<b>すべて送信前に TypeError で失敗</b>し、例外は握りつぶされていました（詳細は <a href="#analyze_sheet_visual">analyze_sheet_visual</a>）。</li>
+    </ul>
+  </div>
+</section>
+
+<section class="block">
+  <h2>いつ LLM が使われるか</h2>
+  <p>モードごとに評価するレベルが決まり（<code>harunobu/core/models.py:486-490</code> の <code>_MODE_LEVELS</code>）、そのレベルのルールのうち AI を使うものだけが LLM を呼びます。AI 呼び出しは常に決定論チェックの<b>補完</b>で、条件に合う列やセルが無ければ呼ばれません。ルールはスレッドプール（最大 8 並列）で動くので、1 シートの中で複数の問い合わせが同時に飛びます（<code>harunobu/core/analyzer.py:213-216</code>）。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>モード</th><th>評価レベル</th><th>LLM を呼びうるルール</th></tr></thead>
+    <tbody><tr><td><code>lite</code></td><td>L1 のみ</td><td>L1-05 / L1-11（画像。ただし現状は送信前に失敗）、L1-09</td></tr><tr><td><code>standard</code></td><td>L1 + L2</td><td>上記 + L2-01、L2-02、L2-04、L2-05</td></tr><tr><td><code>thorough</code></td><td>L1 + L2 + L3</td><td>上記 + L3-04、L3-06、L3-09</td></tr></tbody>
+  </table></div>
+  <p>呼び出しの経路: ルール → <code>AISemanticChecker</code> / <code>AIVisualAnalyzer</code> → <code>AIClient.generate_json</code> / <code>generate_json_with_images</code> → <code>litellm.completion</code>（harunobu/core/ai_client.py:383-427）。</p>
+</section>
+
+<section class="block">
+  <h2>呼び出し箇所の一覧</h2>
+  <p>プロンプトを組み立てるメソッドは 20 個（harunobu/core/ai_semantic_checker.py に 18 個、harunobu/core/ai_visual_analyzer.py に 2 個）。そのうちルールから呼ばれるのは 9 個で、残り 11 個は harunobu/ 配下のどこからも呼ばれていません。</p>
+  <div class="legend"><span><span class="pill real">実解析</span> サンプル解析で実際に送信された</span><span><span class="pill direct">直接呼び出し</span> サンプル解析では呼ばれず、サンプルのデータで直接呼んだ</span><span><span class="pill fail">失敗</span> 呼ばれたが送信前に例外</span></div>
+  <div class="tbl"><table>
+    <thead><tr><th>メソッド</th><th>呼び出し元ルール</th><th>モード</th><th>表データの表現</th><th>取得</th></tr></thead>
+    <tbody><tr><td><a href="#assess_column_header_clarity"><code>assess_column_header_clarity</code></a></td><td>L3-06</td><td>thorough</td><td>ヘッダー文字列のみ（データ値は送らない）</td><td><span class="pill real">実解析 50 件</span></td></tr><tr><td><a href="#check_abbreviations"><code>check_abbreviations</code></a></td><td>L2-02</td><td>standard / thorough</td><td>1 列分の値を行番号付きで縦に列挙</td><td><span class="pill real">実解析 92 件</span></td></tr><tr><td><a href="#batch_infer_units_from_headers"><code>batch_infer_units_from_headers</code></a></td><td>L3-04</td><td>thorough</td><td>列ごとに「ヘッダー + サンプル値 5 個」を番号付きで 1 行に</td><td><span class="pill real">実解析 54 件</span></td></tr><tr><td><a href="#check_wide_format_semantic"><code>check_wide_format_semantic</code></a></td><td>L3-09</td><td>thorough</td><td>ヘッダー行（最大 30）+ 本文の先頭 3 行を &#x27; | &#x27; 区切りで</td><td><span class="pill real">実解析 20 件</span></td></tr><tr><td><a href="#check_choice_variants"><code>check_choice_variants</code></a></td><td>L2-04</td><td>standard / thorough</td><td>列のユニーク値一覧（出現順・重複なし）</td><td><span class="pill real">実解析 7 件</span></td></tr><tr><td><a href="#batch_check_other_detail_mixed"><code>batch_check_other_detail_mixed</code></a></td><td>L2-05</td><td>standard / thorough</td><td>「その他」を含むセル値を、列ヘッダー付きで 1 行ずつ</td><td><span class="pill real">実解析 1 件</span></td></tr><tr><td><a href="#batch_check_zero_unlikely_columns"><code>batch_check_zero_unlikely_columns</code></a></td><td>L1-09</td><td>lite / standard / thorough</td><td>列ごとに「ヘッダー + 非空サンプル値 10 個」</td><td><span class="pill direct">直接呼び出し</span></td></tr><tr><td><a href="#batch_check_unit_in_cells"><code>batch_check_unit_in_cells</code></a></td><td>L2-01</td><td>standard / thorough</td><td>対象セルの値を、列ヘッダー付きで 1 行ずつ</td><td><span class="pill direct">直接呼び出し</span></td></tr><tr><td><a href="#analyze_sheet_visual"><code>analyze_sheet_visual</code></a></td><td>L1-05, L1-11（check_header_clarity / check_format_semantics 経由）</td><td>lite / standard / thorough</td><td>LibreOffice で描画したシート画像（PNG）1 枚 + シート名入りの指示文</td><td><span class="pill fail">実解析で 185 回呼ばれ全て送信前に失敗 → 直接呼び出し（回避パッチ）</span></td></tr><tr><td><a href="#analyze_visual_layout"><code>analyze_visual_layout</code></a></td><td>（ルールからの呼び出しなし）</td><td>—</td><td>全シートの画像（実際には 1 枚）+ 固定の指示文</td><td><span class="pill direct">直接呼び出し</span></td></tr><tr><td><a href="#batch_check_code_needs_table"><code>batch_check_code_needs_table</code></a></td><td>（なし）</td><td>—</td><td>列ごとに「ヘッダー + 値 10 個」</td><td><span class="pill direct">直接呼び出し</span></td></tr><tr><td><a href="#batch_check_special_symbol_intents"><code>batch_check_special_symbol_intents</code></a></td><td>（なし）</td><td>—</td><td>記号・列名・数値割合・サンプル値 15 個（repr）</td><td><span class="pill direct">直接呼び出し</span></td></tr><tr><td><a href="#batch_normalize_time_values"><code>batch_normalize_time_values</code></a></td><td>（なし）</td><td>—</td><td>値を列名付きで 1 行ずつ</td><td><span class="pill direct">直接呼び出し</span></td></tr><tr><td><a href="#check_special_symbol_intent"><code>check_special_symbol_intent</code></a></td><td>（なし）</td><td>—</td><td>記号・列名・サンプル値 20 個・数値割合</td><td><span class="pill direct">直接呼び出し</span></td></tr><tr><td><a href="#infer_unit_from_header"><code>infer_unit_from_header</code></a></td><td>（なし）</td><td>—</td><td>ヘッダー + サンプル値 5 個</td><td><span class="pill direct">直接呼び出し</span></td></tr><tr><td><a href="#check_code_needs_table"><code>check_code_needs_table</code></a></td><td>（なし）</td><td>—</td><td>ヘッダー + 値 10 個</td><td><span class="pill direct">直接呼び出し</span></td></tr><tr><td><a href="#check_unit_in_cell"><code>check_unit_in_cell</code></a></td><td>（なし）</td><td>—</td><td>列ヘッダー + セル値 1 つ</td><td><span class="pill direct">直接呼び出し</span></td></tr><tr><td><a href="#check_other_detail_mixed"><code>check_other_detail_mixed</code></a></td><td>（なし）</td><td>—</td><td>列ヘッダー + セル値 1 つ</td><td><span class="pill direct">直接呼び出し</span></td></tr><tr><td><a href="#normalize_time_value"><code>normalize_time_value</code></a></td><td>（なし）</td><td>—</td><td>列ヘッダー + 値 1 つ</td><td><span class="pill direct">直接呼び出し</span></td></tr><tr><td><a href="#check_metadata_quality"><code>check_metadata_quality</code></a></td><td>（なし）</td><td>—</td><td>ヘッダー（最大 30）+ メタデータ項目の文字列</td><td><span class="pill direct">直接呼び出し</span></td></tr></tbody>
+  </table></div>
+  <h3>実解析での送信件数</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>メソッド</th><th>リクエスト数</th><th>ファイル数</th><th>プロンプト文字数</th></tr></thead>
+    <tbody><tr><td><code>check_abbreviations</code></td><td class='num'>92</td><td class='num'>32</td><td class='num'>765–1,537</td></tr><tr><td><code>batch_infer_units_from_headers</code></td><td class='num'>54</td><td class='num'>23</td><td class='num'>642–891</td></tr><tr><td><code>assess_column_header_clarity</code></td><td class='num'>50</td><td class='num'>25</td><td class='num'>501–550</td></tr><tr><td><code>check_wide_format_semantic</code></td><td class='num'>20</td><td class='num'>9</td><td class='num'>848–937</td></tr><tr><td><code>check_choice_variants</code></td><td class='num'>7</td><td class='num'>3</td><td class='num'>788–935</td></tr><tr><td><code>batch_check_other_detail_mixed</code></td><td class='num'>1</td><td class='num'>1</td><td class='num'>251–251</td></tr></tbody>
+  </table></div>
+  <p>L3-06 と L3-04 は表ごとに 1 回ずつ、L2-02 は行ヘッダー列ごとに 1 回呼ばれるので、件数が多くなります。</p>
+</section>
+
+<section class="block">
+  <h2>HTTP で実際に送られる形</h2>
+  <p><code>POST /v1/chat/completions</code> の本文をそのまま載せます（実解析の最初のリクエスト、assess_column_header_clarity）。モデル名は既定の <code>gpt-5.5</code>（harunobu/core/ai_client.py:86-89）。litellm が付けた <code>openai/</code> 接頭辞はサーバへは送られません。</p>
+  <div class="pre-wrap"><pre>{
+ &quot;messages&quot;: [
+  {
+   &quot;role&quot;: &quot;user&quot;,
+   &quot;content&quot;: &quot;以下の行政データのスプレッドシート列ヘッダーの明確さを評価してください。\n\nヘッダー: &#x27;Prefecture&#x27;, &#x27;2020&#x27;, &#x27;2021&#x27;, &#x27;2022&#x27;, &#x27;2023&#x27;, &#x27;2024&#x27;\n\n曖昧なヘッダーの例:\n- 「値」→ 何の値か不明。「人口（人）」「面積（ha）」など具体的に\n- 「区分」→ 何の区分か不明。「性別区分」「年齢区分」など具体的に\n- 「A」「B」「C」→ アルファベットだけでは意味不明\n- 「データ1」「項目2」→ 番号だけでは意味不明\n- 「備考」→ これは一般的に許容される\n- 「合計」→ 何の合計か不明な場合は曖昧\n\n明確なヘッダーの例:\n- 「都道府県名」「人口（人）」「面積（km²）」→ 明確\n- 「年度」「月」→ 明確\n- 「番号」「No.」→ 用途による\n\n曖昧と判断したヘッダーのみ返してください。明確なものは含めないでください。\n確信がない場合は曖昧とみなさないでください（誤検出より見逃しを優先）。\n\nJSON回答:\n[{\&quot;header\&quot;: \&quot;ヘッダー名\&quot;, \&quot;is_ambiguous\&quot;: true, \&quot;suggested_improvement\&quot;: \&quot;改善案\&quot;,\n\&quot;reason\&quot;: \&quot;曖昧な理由\&quot;}]\nすべて明確: []&quot;
+  }
+ ],
+ &quot;model&quot;: &quot;gpt-5.5&quot;,
+ &quot;response_format&quot;: {
+  &quot;type&quot;: &quot;json_object&quot;
+ },
+ &quot;temperature&quot;: 0.1
+}</pre></div>
+  <details><summary>リクエストヘッダー（Authorization を除く）</summary><div class="pre-wrap"><pre>Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Accept: application/json
+Content-Type: application/json
+User-Agent: OpenAI/Python 2.38.0
+X-Stainless-Lang: python
+X-Stainless-Package-Version: 2.38.0
+X-Stainless-OS: Linux
+X-Stainless-Arch: x64
+X-Stainless-Runtime: CPython
+X-Stainless-Runtime-Version: 3.12.12
+X-Stainless-Async: false
+X-Stainless-Raw-Response: true
+x-stainless-retry-count: 0
+x-stainless-read-timeout: 600.0</pre></div></details>
+  <p>画像付きの場合は <code>content</code> がパーツの配列になり、画像パートが先、テキストが後に来ます。下は analyze_sheet_visual の本文で、base64 は先頭 80 文字で切っています（元の data URL は 45,978 文字、base64 部分は 45,956 文字）。<code>_original_*</code> はこのページ用の注記で、実際の送信には含まれません。</p>
+  <details class="long"><summary>画像付きリクエストの本文を開く</summary><div class="pre-wrap"><pre>{
+ &quot;messages&quot;: [
+  {
+   &quot;role&quot;: &quot;user&quot;,
+   &quot;content&quot;: [
+    {
+     &quot;type&quot;: &quot;image_url&quot;,
+     &quot;image_url&quot;: {
+      &quot;url&quot;: &quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAxsAAARkCAYAAAAaDQlTAAAACXBIWXMAAAsWAAALFQEGDaotAAAgAElE…(truncated)&quot;,
+      &quot;_original_url_length&quot;: 45978,
+      &quot;_original_base64_length&quot;: 45956
+     }
+    },
+    {
+     &quot;type&quot;: &quot;text&quot;,
+     &quot;text&quot;: &quot;以下はExcelファイルの「OK-01」シートのスクリーンショットです。\n見た目から以下を詳細に分析してください。\n\n行政データの機械可読性チェック観点:\n\n1. **色による意味付け**: 背景色やフォント色で情報を伝えているセルを特定してください。\n   例: 赤字で「マイナス」、グレー背景で「該当なし」、黄色で「要注意」等\n\n2. **結合セル**: ヘッダーやデータ領域で結合されているセルを特定してください。\n\n3. **書式ベース意味付け**: 太字・斜体・取り消し線等で意味を持たせている箇所\n\n4. **表外の注釈**: 表の外に配置されたメモ、脚注、注意書き\n\n5. **装飾要素**: ロゴ、画像、罫線アート、空白セルでの余白作り\n\n6. **レイアウト問題**: 表の開始位置が不自然（A1以外から始まる等）\n\nJSON回答:\n{\n    \&quot;has_color_coding\&quot;: true/false,\n    \&quot;color_coded_cells\&quot;: [\n        {\&quot;location\&quot;: \&quot;セル位置や範囲\&quot;, \&quot;color\&quot;: \&quot;色の説明\&quot;, \&quot;likely_meaning\&quot;: \&quot;推定される意味\&quot;}\n    ],\n    \&quot;has_merged_headers\&quot;: true/false,\n    \&quot;merged_areas\&quot;: [\n        {\&quot;location\&quot;: \&quot;セル範囲\&quot;, \&quot;description\&quot;: \&quot;結合の説明\&quot;}\n    ],\n    \&quot;annotations\&quot;: [\n        {\&quot;location\&quot;: \&quot;位置\&quot;, \&quot;text\&quot;: \&quot;注釈テキスト\&quot;, \&quot;type\&quot;: \&quot;footnote/comment/note\&quot;}\n    ],\n    \&quot;format_based_semantics\&quot;: [\n        {\&quot;location\&quot;: \&quot;セル位置\&quot;, \&quot;format_type\&quot;: \&quot;bold/italic/color/strikethrough\&quot;, \&quot;likely_meaning\&quot;: \&quot;意味\&quot;}\n    ],\n    \&quot;visual_issues\&quot;: [\n        {\&quot;type\&quot;: \&quot;issue_type\&quot;, \&quot;description\&quot;: \&quot;問題の説明\&quot;, \&quot;severity\&quot;: \&quot;error/warning/info\&quot;}\n    ]\n}&quot;
+    }
+   ]
+  }
+ ],
+ &quot;model&quot;: &quot;gpt-5.5&quot;,
+ &quot;response_format&quot;: {
+  &quot;type&quot;: &quot;json_object&quot;
+ },
+ &quot;temperature&quot;: 0.1
+}</pre></div></details>
+</section>
+
+<section class="block">
+  <h2>メソッドごとの実例</h2>
+  <div class="sample-key"><span class="ctx">薄い文字</span> 共通前置き（_ADMIN_DATA_CONTEXT, harunobu/core/ai_semantic_checker.py:16-29） <span class="dat">黄色の行</span> 表から取り出したデータの行（同じメソッドの他のプロンプトと比べて変わる行。実解析分のみ）</div>
+  <p>ルールから呼ばれる 10 個を先に、どこからも呼ばれていない 10 個を後に並べています。</p>
+  
+<section class="method" id="assess_column_header_clarity">
+  <header class="mh">
+    <h3><code>assess_column_header_clarity</code></h3>
+    <span class="pill real">実解析 50 件</span>
+  </header>
+  <p class="purpose">列ヘッダーの曖昧さ（「値」「区分」「A」など）を判定し、改善案を返させる。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>L3-06</dd></div>
+    <div><dt>モード</dt><dd>thorough</dd></div>
+    <div><dt>表データの表現</dt><dd>ヘッダー文字列のみ（データ値は送らない）</dd></div>
+    <div><dt>共通前置き</dt><dd>なし</dd></div>
+    <div><dt>この例の出所</dt><dd>実解析: <code>rule_05_missing_column_names.xlsx</code> / シート <code>NG-02</code>（ルール L3-06）</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre>以下の行政データのスプレッドシート列ヘッダーの明確さを評価してください。
+
+<span class="dat">ヘッダー: &#x27;001&#x27;, &#x27;002&#x27;, &#x27;003&#x27;, &#x27;004&#x27;, &#x27;005&#x27;, &#x27;006&#x27;</span>
+
+曖昧なヘッダーの例:
+- 「値」→ 何の値か不明。「人口（人）」「面積（ha）」など具体的に
+- 「区分」→ 何の区分か不明。「性別区分」「年齢区分」など具体的に
+- 「A」「B」「C」→ アルファベットだけでは意味不明
+- 「データ1」「項目2」→ 番号だけでは意味不明
+- 「備考」→ これは一般的に許容される
+- 「合計」→ 何の合計か不明な場合は曖昧
+
+明確なヘッダーの例:
+- 「都道府県名」「人口（人）」「面積（km²）」→ 明確
+- 「年度」「月」→ 明確
+- 「番号」「No.」→ 用途による
+
+曖昧と判断したヘッダーのみ返してください。明確なものは含めないでください。
+確信がない場合は曖昧とみなさないでください（誤検出より見逃しを優先）。
+
+JSON回答:
+[{&quot;header&quot;: &quot;ヘッダー名&quot;, &quot;is_ambiguous&quot;: true, &quot;suggested_improvement&quot;: &quot;改善案&quot;,
+&quot;reason&quot;: &quot;曖昧な理由&quot;}]
+すべて明確: []</pre></div>
+  <details class="vars"><summary>全キャプチャのデータ部分（50 件、異なる内容は 20 通り）</summary><p class="hint">このメソッドの全プロンプトに共通する行（テンプレート）を除いた残りの行だけを、内容が同じものをまとめて並べたもの。テンプレート部分は上の全文と同じ。</p><ol class="varlist"><li><span class="src">rule_01_file_format_OK.xlsx / Population Data</span><pre>ヘッダー: &#x27;Prefecture&#x27;, &#x27;2020&#x27;, &#x27;2021&#x27;, &#x27;2022&#x27;, &#x27;2023&#x27;, &#x27;2024&#x27;</pre></li><li><span class="src">rule_02_multiple_tables.xlsx / OK、rule_02_multiple_tables.xlsx / NG-01、rule_02_multiple_tables_NG-01.csv / rule_02_multiple_tables_NG-01、rule_02_multiple_tables_OK.csv / rule_02_multiple_tables_OK ほか 22 件（26 回）</span><pre>ヘッダー: &#x27;都道府県&#x27;, &#x27;2020年&#x27;, &#x27;2021年&#x27;, &#x27;2022年&#x27;, &#x27;2023年&#x27;, &#x27;2024年&#x27;</pre></li><li><span class="src">rule_02_multiple_tables.xlsx / NG-01</span><pre>ヘッダー: &#x27;面積（k㎡）&#x27;, &#x27;2020年&#x27;, &#x27;2021年&#x27;, &#x27;2022年&#x27;, &#x27;2023年&#x27;, &#x27;2024年&#x27;</pre></li><li><span class="src">rule_05_missing_column_names.xlsx / NG-01</span><pre>ヘッダー: &#x27;都道府県&#x27;, &#x27;2020年&#x27;, &#x27;2022年&#x27;, &#x27;2024年&#x27;</pre></li><li><span class="src">rule_05_missing_column_names.xlsx / NG-02</span><pre>ヘッダー: &#x27;001&#x27;, &#x27;002&#x27;, &#x27;003&#x27;, &#x27;004&#x27;, &#x27;005&#x27;, &#x27;006&#x27;</pre></li><li><span class="src">rule_06_space_formatting.xlsx / OK-EN</span><pre>ヘッダー: &#x27;Prefecture&#x27;, &#x27;2020&#x27;, &#x27;2021&#x27;, &#x27;2022&#x27;, &#x27;2023&#x27;, &#x27;2024&#x27;, &#x27;Notes&#x27;</pre></li><li><span class="src">rule_06_space_formatting.xlsx / NG-02</span><pre>ヘッダー: &#x27;都道府県&#x27;, &#x27;2020年&#x27;, &#x27;2021  年&#x27;, &#x27;2022年&#x27;, &#x27;2023年&#x27;, &#x27;2024年&#x27;</pre></li><li><span class="src">rule_06_space_formatting.xlsx / NG-03</span><pre>ヘッダー: &#x27;都道府県&#x27;, &#x27;2020年
+人口&#x27;, &#x27;2021年
+人口&#x27;, &#x27;2022年&#x27;, &#x27;2023年&#x27;, &#x27;2024年&#x27;</pre></li><li><span class="src">rule_06_space_formatting_NG-01.csv / rule_06_space_formatting_NG-01</span><pre>ヘッダー: &#x27;都道府県&#x27;, &#x27;2020  年&#x27;</pre></li><li><span class="src">rule_06_space_formatting_NG-02.csv / rule_06_space_formatting_NG-02</span><pre>ヘッダー: &#x27;都道府県&#x27;, &#x27;2020年
+人口&#x27;</pre></li><li><span class="src">rule_06_space_formatting_OK-English.csv / rule_06_space_formatting_OK-English</span><pre>ヘッダー: &#x27;Prefecture&#x27;, &#x27;Notes&#x27;, &#x27;Population&#x27;</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-05</span><pre>ヘッダー: &#x27;自治体&#x27;, &#x27;対応チャネル&#x27;, &#x27;備考&#x27;</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-06</span><pre>ヘッダー: &#x27;自治体&#x27;, &#x27;対象年度&#x27;, &#x27;担当部門&#x27;</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-07</span><pre>ヘッダー: &#x27;自治体&#x27;, &#x27;関係部署&#x27;, &#x27;公開区分&#x27;</pre></li><li><span class="src">rule_10_excel_objects.xlsx / OK-01、rule_10_excel_objects.xlsx / OK-02、rule_10_excel_objects.xlsx / NG-01、rule_10_excel_objects.xlsx / NG-02（4 回）</span><pre>ヘッダー: &#x27;都道府県&#x27;, &#x27;2023年&#x27;, &#x27;2024年&#x27;</pre></li><li><span class="src">rule_14_csv_single_line_NG-01.csv / rule_14_csv_single_line_NG-01、rule_14_csv_single_line_OK.csv / rule_14_csv_single_line_OK（2 回）</span><pre>ヘッダー: &#x27;都道府県&#x27;, &#x27;備考&#x27;</pre></li><li><span class="src">rule_15_csv_quoting_NG-01.csv / rule_15_csv_quoting_NG-01</span><pre>ヘッダー: &#x27;所在地&#x27;, &#x27;東京都&#x27;, &#x27;港区&#x27;</pre></li><li><span class="src">rule_17_omit_column.xlsx / OK、rule_17_omit_column.xlsx / NG-01（2 回）</span><pre>ヘッダー: &#x27;都道府県&#x27;, &#x27;市区町村&#x27;, &#x27;人口&#x27;</pre></li><li><span class="src">rule_22_header_start_position.xlsx / NG-03</span><pre>ヘッダー: &#x27;名称&#x27;, &#x27;千人&#x27;, &#x27;千人&#x27;, &#x27;千人&#x27;, &#x27;千人&#x27;, &#x27;千人&#x27;</pre></li><li><span class="src">rule_25_data_units.xlsx / OK</span><pre>ヘッダー: &#x27;地域名&#x27;, &#x27;売上（円）&#x27;, &#x27;数量（個）&#x27;, &#x27;面積（㎡）&#x27;</pre></li></ol></details>
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>ヘッダーは先頭 30 個まで、<code>'h1', 'h2', …</code> 形式でカンマ連結（harunobu/core/ai_semantic_checker.py:954-955）。</li><li>L3-06 は表のヘッダー行の空でないセルを全部集めて渡す（harunobu/rules/level3/L3_06_region_code.py:194-201）。</li><li>共通の行政データ前置き（_ADMIN_DATA_CONTEXT）は付かない。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>[{&quot;header&quot;: str, &quot;is_ambiguous&quot;: bool, &quot;suggested_improvement&quot;: str, &quot;reason&quot;: str}] — 送ったヘッダーと完全一致しない header は捨てる</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:983-1001</span></p>
+</section>
+<section class="method" id="check_abbreviations">
+  <header class="mh">
+    <h3><code>check_abbreviations</code></h3>
+    <span class="pill real">実解析 92 件</span>
+  </header>
+  <p class="purpose">行ヘッダー列（表側）で「同上」「〃」や繰り返し省略の空白が使われていないかを判定させる。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>L2-02</dd></div>
+    <div><dt>モード</dt><dd>standard / thorough</dd></div>
+    <div><dt>表データの表現</dt><dd>1 列分の値を行番号付きで縦に列挙</dd></div>
+    <div><dt>共通前置き</dt><dd>あり</dd></div>
+    <div><dt>この例の出所</dt><dd>実解析: <code>rule_17_omit_column.xlsx</code> / シート <code>NG-01</code>（ルール L2-02）</dd></div>
+  </dl>
+  
+  <details class="long"><summary>プロンプト全文を開く（1,134 文字）</summary><div class="pre-wrap"><pre><span class="ctx">あなたは日本の行政データを分析するエキスパートです。
+対象データは以下のような行政機関のExcelファイルです:
+- こども家庭庁（保育所・福祉データ）
+- 厚生労働省（医療・介護・雇用データ）
+- 文部科学省（教育データ）
+- 総務省（地方財政・水道事業データ）
+
+行政データ特有の表現:
+- 秘匿値: 「-」「×」「…」「＊」「－」（個人情報保護上の非公開）
+- 単位省略: 「（百万円）」をヘッダーに記載し数値列は単位なし
+- 年度表記: 「令和5年度」「R5」「2023年度」が混在することがある
+- 地域コード: JIS X 0401/0402 準拠の都道府県・市区町村コード
+- 「0」始まりコード: 都道府県コード「01」等は文字列として保持すべき
+</span>
+<span class="dat">以下は「市区町村」という列のデータです（シート: NG-01）。</span>
+各行の値が省略（前の行の値の繰り返し省略・略称・省略記号）になっていないか分析してください。
+
+データ:
+<span class="dat">  行2: &#x27;札幌市&#x27;</span>
+<span class="dat">  行3: &#x27;函館市&#x27;</span>
+<span class="dat">  行4: &#x27;小樽市&#x27;</span>
+<span class="dat">  行5: &#x27;旭川市&#x27;</span>
+<span class="dat">  行6: &#x27;釧路市&#x27;</span>
+<span class="dat">  行7: &#x27;帯広市&#x27;</span>
+<span class="dat">  行8: &#x27;北見市&#x27;</span>
+<span class="dat">  行9: &#x27;苫小牧市&#x27;</span>
+<span class="dat">  行10: &#x27;江別市&#x27;</span>
+<span class="dat">  行11: &#x27;青森市&#x27;</span>
+<span class="dat">  行12: &#x27;弘前市&#x27;</span>
+<span class="dat">  行13: &#x27;八戸市&#x27;</span>
+<span class="dat">  行14: &#x27;盛岡市&#x27;</span>
+<span class="dat">  行15: &#x27;一関市&#x27;</span>
+<span class="dat">  行16: &#x27;奥州市&#x27;</span>
+<span class="dat">  行17: &#x27;仙台市&#x27;</span>
+<span class="dat">  行18: &#x27;石巻市&#x27;</span>
+<span class="dat">  行19: &#x27;大崎市&#x27;</span>
+<span class="dat">  行20: &#x27;秋田市&#x27;</span>
+<span class="dat">  行21: &#x27;山形市&#x27;</span>
+<span class="dat">  行22: &#x27;鶴岡市&#x27;</span>
+<span class="dat">  行23: &#x27;福島市&#x27;</span>
+<span class="dat">  行24: &#x27;会津若松市&#x27;</span>
+<span class="dat">  行25: &#x27;郡山市&#x27;</span>
+<span class="dat">  行26: &#x27;いわき市&#x27;</span>
+<span class="dat">  行27: &#x27;水戸市&#x27;</span>
+<span class="dat">  行28: &#x27;日立市&#x27;</span>
+<span class="dat">  行29: &#x27;土浦市&#x27;</span>
+<span class="dat">  行30: &#x27;古河市&#x27;</span>
+<span class="dat">  行31: &#x27;取手市&#x27;</span>
+
+省略と判断できる行をJSONで返してください。省略でない場合は空のリストを返してください。
+判断に迷う場合は省略とみなさないでください（誤検出より見逃しを優先）。
+
+省略の例:
+- 空白セルが連続（前の値の繰り返しとして空白を使用）
+- 「同」「同上」「〃」などの省略記号
+- ヘッダーが「年度」でデータが「H28」「H29」などの和暦略称
+
+FP回避:
+- 同じ値が連続しても、それが正しいデータであれば省略ではない（例: 同一市町村名の繰り返し）
+- 空白セルが連続していても、そのセルに値がないことが正常なケースもある
+
+レスポンス: [{&quot;row&quot;: 数値, &quot;value&quot;: &quot;文字列&quot;, &quot;reason&quot;: &quot;省略の理由&quot;}]
+省略なし: []</pre></div></details>
+  <details class="vars"><summary>全キャプチャのデータ部分（92 件、異なる内容は 76 通り）</summary><p class="hint">このメソッドの全プロンプトに共通する行（テンプレート）を除いた残りの行だけを、内容が同じものをまとめて並べたもの。テンプレート部分は上の全文と同じ。</p><ol class="varlist"><li><span class="src">rule_01_file_format_OK.xlsx / Population Data</span><pre>以下は「Prefecture」という列のデータです（シート: Population Data）。
+  行2: &#x27;Hokkaido Prefecture&#x27;
+  行3: &#x27;Aomori Prefecture&#x27;
+  行4: &#x27;Iwate Prefecture&#x27;
+  行5: &#x27;Miyagi Prefecture&#x27;
+  行6: &#x27;Akita Prefecture&#x27;</pre></li><li><span class="src">rule_02_multiple_tables.xlsx / OK、rule_03_fragmented_data.xlsx / OK、rule_04_extraneous_info.xlsx / OK、rule_05_missing_column_names.xlsx / OK ほか 4 件（8 回）</span><pre>以下は「都道府県」という列のデータです（シート: OK）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;青森県&#x27;
+  行4: &#x27;岩手県&#x27;
+  行5: &#x27;宮城県&#x27;
+  行6: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_02_multiple_tables.xlsx / NG-01、rule_04_extraneous_info.xlsx / NG-01、rule_05_missing_column_names.xlsx / NG-01、rule_06_space_formatting.xlsx / NG-01 ほか 2 件（6 回）</span><pre>以下は「都道府県」という列のデータです（シート: NG-01）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;青森県&#x27;
+  行4: &#x27;岩手県&#x27;
+  行5: &#x27;宮城県&#x27;
+  行6: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_02_multiple_tables.xlsx / NG-01</span><pre>以下は「面積（k㎡）」という列のデータです（シート: NG-01）。
+  行9: &#x27;北海道&#x27;
+  行10: &#x27;青森県&#x27;
+  行11: &#x27;岩手県&#x27;
+  行12: &#x27;宮城県&#x27;
+  行13: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_02_multiple_tables_NG-01.csv / rule_02_multiple_tables_NG-01</span><pre>以下は「都道府県」という列のデータです（シート: rule_02_multiple_tables_NG-01）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;青森県&#x27;
+  行4: &#x27;岩手県&#x27;
+  行5: &#x27;宮城県&#x27;
+  行6: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_02_multiple_tables_OK.csv / rule_02_multiple_tables_OK</span><pre>以下は「都道府県」という列のデータです（シート: rule_02_multiple_tables_OK）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;青森県&#x27;
+  行4: &#x27;岩手県&#x27;
+  行5: &#x27;宮城県&#x27;
+  行6: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_03_fragmented_data.xlsx / NG-01</span><pre>以下は「都道府県」という列のデータです（シート: NG-01）。
+  行4: &#x27;北海道&#x27;
+  行5: &#x27;青森県&#x27;</pre></li><li><span class="src">rule_03_fragmented_data.xlsx / NG-02、rule_04_extraneous_info.xlsx / NG-02、rule_13_hidden_rows_columns.xlsx / NG-02（3 回）</span><pre>以下は「都道府県」という列のデータです（シート: NG-02）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;青森県&#x27;
+  行4: &#x27;岩手県&#x27;
+  行5: &#x27;宮城県&#x27;
+  行6: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_05_missing_column_names.xlsx / NG-02</span><pre>以下は「001」という列のデータです（シート: NG-02）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;青森県&#x27;
+  行4: &#x27;岩手県&#x27;
+  行5: &#x27;宮城県&#x27;
+  行6: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_06_space_formatting.xlsx / OK-EN</span><pre>以下は「Prefecture」という列のデータです（シート: OK-EN）。
+  行2: &#x27;Hokkaido Prefecture&#x27;
+  行3: &#x27;Aomori Prefecture&#x27;
+  行4: &#x27;Iwate Prefecture&#x27;
+  行5: &#x27;Miyagi Prefecture&#x27;
+  行6: &#x27;Akita Prefecture&#x27;</pre></li><li><span class="src">rule_06_space_formatting.xlsx / NG-02</span><pre>以下は「都道府県」という列のデータです（シート: NG-02）。
+  行2: &#x27;北  海道&#x27;
+  行3: &#x27;青  森県&#x27;
+  行4: &#x27;岩  手県&#x27;
+  行5: &#x27;宮城県&#x27;
+  行6: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_06_space_formatting.xlsx / NG-03</span><pre>以下は「都道府県」という列のデータです（シート: NG-03）。
+  行2: &#x27;北海道\n（道内）&#x27;
+  行3: &#x27;青森県\n（東北）&#x27;
+  行4: &#x27;岩手県&#x27;
+  行5: &#x27;宮城県&#x27;
+  行6: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_06_space_formatting_NG-01.csv / rule_06_space_formatting_NG-01</span><pre>以下は「都道府県」という列のデータです（シート: rule_06_space_formatting_NG-01）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;青  森県&#x27;</pre></li><li><span class="src">rule_06_space_formatting_NG-02.csv / rule_06_space_formatting_NG-02</span><pre>以下は「都道府県」という列のデータです（シート: rule_06_space_formatting_NG-02）。
+  行2: &#x27;北海道\n（道内）&#x27;
+  行3: &#x27;青森県\n（東北）&#x27;</pre></li><li><span class="src">rule_06_space_formatting_OK-English.csv / rule_06_space_formatting_OK-English</span><pre>以下は「Prefecture」という列のデータです（シート: rule_06_space_formatting_OK-English）。
+  行2: &#x27;Hokkaido Prefecture&#x27;
+  行3: &#x27;Aomori Prefecture&#x27;</pre></li><li><span class="src">rule_06_space_formatting_OK-English.csv / rule_06_space_formatting_OK-English</span><pre>以下は「Notes」という列のデータです（シート: rule_06_space_formatting_OK-English）。
+  行2: &#x27;Northern region&#x27;
+  行3: &#x27;Population estimate&#x27;</pre></li><li><span class="src">rule_06_space_formatting_OK.csv / rule_06_space_formatting_OK</span><pre>以下は「都道府県」という列のデータです（シート: rule_06_space_formatting_OK）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;青森県&#x27;
+  行4: &#x27;岩手県&#x27;
+  行5: &#x27;宮城県&#x27;
+  行6: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / OK</span><pre>以下は「区分」という列のデータです（シート: OK）。
+  行2: &#x27;総計&#x27;
+  行3: &#x27;A&#x27;
+  行4: &#x27;B&#x27;
+  行5: &#x27;C&#x27;
+  行6: &#x27;D&#x27;
+  行7: &#x27;E&#x27;
+  行8: &#x27;F&#x27;
+  行9: &#x27;G&#x27;
+  行10: &#x27;H&#x27;</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-01</span><pre>以下は「区分」という列のデータです（シート: NG-01）。
+  行2: &#x27;総計&#x27;
+  行3: &#x27;A&#x27;
+  行4: &#x27;B&#x27;
+  行5: &#x27;C&#x27;
+  行6: &#x27;D&#x27;
+  行7: &#x27;E&#x27;
+  行8: &#x27;F&#x27;
+  行9: &#x27;G&#x27;
+  行10: &#x27;H&#x27;</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-02</span><pre>以下は「区分」という列のデータです（シート: NG-02）。
+  行2: &#x27;総計&#x27;
+  行3: &#x27;A&#x27;
+  行4: &#x27;B&#x27;
+  行5: &#x27;C&#x27;
+  行6: &#x27;D&#x27;
+  行7: &#x27;E&#x27;
+  行8: &#x27;F&#x27;
+  行9: &#x27;G&#x27;
+  行10: &#x27;H&#x27;</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-03</span><pre>以下は「項目」という列のデータです（シート: NG-03）。
+  行2: &#x27;仕入額&#x27;
+  行3: &#x27;出荷額&#x27;</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-04</span><pre>以下は「商品
+月」という列のデータです（シート: NG-04）。
+  行2: &#x27;1月&#x27;
+  行3: &#x27;2月&#x27;
+  行4: &#x27;3月&#x27;</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-05</span><pre>以下は「自治体」という列のデータです（シート: NG-05）。
+  行2: &#x27;A市&#x27;
+  行3: &#x27;B町&#x27;
+  行4: &#x27;C村&#x27;</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-05</span><pre>以下は「対応チャネル」という列のデータです（シート: NG-05）。
+  行2: &#x27;窓口・電話・メール&#x27;
+  行3: &#x27;電話・FAX&#x27;
+  行4: &#x27;窓口・オンライン&#x27;</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-06</span><pre>以下は「自治体」という列のデータです（シート: NG-06）。
+  行2: &#x27;A市&#x27;
+  行3: &#x27;B町&#x27;
+  行4: &#x27;C村&#x27;</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-06</span><pre>以下は「対象年度」という列のデータです（シート: NG-06）。
+  行2: &#x27;2022年度\n2023年度&#x27;
+  行3: &#x27;2021年度\n2022年度&#x27;
+  行4: &#x27;2023年度\n2024年度&#x27;</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-07</span><pre>以下は「自治体」という列のデータです（シート: NG-07）。
+  行2: &#x27;A市&#x27;
+  行3: &#x27;B町&#x27;
+  行4: &#x27;C村&#x27;</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-07</span><pre>以下は「関係部署」という列のデータです（シート: NG-07）。
+  行2: &#x27;総務課, 企画課, 財政課&#x27;
+  行3: &#x27;福祉課, 税務課&#x27;
+  行4: &#x27;農政課, 建設課, 観光課&#x27;</pre></li><li><span class="src">rule_08_platform_dependent_chars.xlsx / OK</span><pre>以下は「項目」という列のデータです（シート: OK）。
+  行2: &#x27;東京都&#x27;
+  行3: &#x27;面積(参考)&#x27;
+  行4: &#x27;コード&#x27;</pre></li><li><span class="src">rule_08_platform_dependent_chars.xlsx / NG-01</span><pre>以下は「番号」という列のデータです（シート: NG-01）。
+  行2: &#x27;①&#x27;
+  行3: &#x27;⑤&#x27;
+  行4: &#x27;⑩&#x27;</pre></li><li><span class="src">rule_08_platform_dependent_chars.xlsx / NG-02</span><pre>以下は「章」という列のデータです（シート: NG-02）。
+  行2: &#x27;Ⅲ&#x27;
+  行3: &#x27;Ⅳ&#x27;</pre></li><li><span class="src">rule_08_platform_dependent_chars.xlsx / NG-03</span><pre>以下は「会社名」という列のデータです（シート: NG-03）。
+  行2: &#x27;㈱サンプル&#x27;
+  行3: &#x27;参照&#x27;</pre></li><li><span class="src">rule_08_platform_dependent_chars.xlsx / OK-分類コード</span><pre>以下は「項目」という列のデータです（シート: OK-分類コード）。
+  行2: &#x27;Ⅰ-0&#x27;
+  行3: &#x27;Ⅱ－１&#x27;
+  行4: &#x27;Ⅲ-2&#x27;</pre></li><li><span class="src">rule_08_platform_dependent_chars_NG-CP932.csv / rule_08_platform_dependent_chars_NG-CP932</span><pre>以下は「番号」という列のデータです（シート: rule_08_platform_dependent_chars_NG-CP932）。
+  行2: &#x27;①&#x27;
+  行3: &#x27;⑤&#x27;
+  行4: &#x27;⑩&#x27;</pre></li><li><span class="src">rule_08_platform_dependent_chars_NG-CP932.csv / rule_08_platform_dependent_chars_NG-CP932</span><pre>以下は「章」という列のデータです（シート: rule_08_platform_dependent_chars_NG-CP932）。
+  行2: &#x27;Ⅲ&#x27;
+  行3: &#x27;Ⅳ&#x27;
+  行4: &#x27;Ⅴ&#x27;</pre></li><li><span class="src">rule_08_platform_dependent_chars_NG-CP932.csv / rule_08_platform_dependent_chars_NG-CP932</span><pre>以下は「会社名」という列のデータです（シート: rule_08_platform_dependent_chars_NG-CP932）。
+  行2: &#x27;㈱サンプル&#x27;
+  行3: &#x27;参照&#x27;
+  行4: &#x27;通常会社&#x27;</pre></li><li><span class="src">rule_08_platform_dependent_chars_OK-UTF8.csv / rule_08_platform_dependent_chars_OK-UTF8</span><pre>以下は「番号」という列のデータです（シート: rule_08_platform_dependent_chars_OK-UTF8）。
+  行2: &#x27;①&#x27;
+  行3: &#x27;⑤&#x27;
+  行4: &#x27;⑩&#x27;</pre></li><li><span class="src">rule_08_platform_dependent_chars_OK-UTF8.csv / rule_08_platform_dependent_chars_OK-UTF8</span><pre>以下は「章」という列のデータです（シート: rule_08_platform_dependent_chars_OK-UTF8）。
+  行2: &#x27;Ⅲ&#x27;
+  行3: &#x27;Ⅳ&#x27;
+  行4: &#x27;Ⅴ&#x27;</pre></li><li><span class="src">rule_08_platform_dependent_chars_OK-UTF8.csv / rule_08_platform_dependent_chars_OK-UTF8</span><pre>以下は「会社名」という列のデータです（シート: rule_08_platform_dependent_chars_OK-UTF8）。
+  行2: &#x27;㈱サンプル&#x27;
+  行3: &#x27;参照&#x27;
+  行4: &#x27;通常会社&#x27;</pre></li><li><span class="src">rule_10_excel_objects.xlsx / OK-01</span><pre>以下は「都道府県」という列のデータです（シート: OK-01）。
+  行7: &#x27;北海道&#x27;
+  行8: &#x27;青森県&#x27;
+  行9: &#x27;岩手県&#x27;
+  行10: &#x27;宮城県&#x27;
+  行11: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_10_excel_objects.xlsx / OK-02、rule_11_format_based_semantics.xlsx / OK-02（2 回）</span><pre>以下は「都道府県」という列のデータです（シート: OK-02）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;青森県&#x27;
+  行4: &#x27;岩手県&#x27;
+  行5: &#x27;宮城県&#x27;
+  行6: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_10_excel_objects.xlsx / NG-02</span><pre>以下は「都道府県」という列のデータです（シート: NG-02）。
+  行2: &#x27;北海道&#x27;
+  行4: &#x27;岩手県&#x27;
+  行5: &#x27;宮城県&#x27;
+  行6: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_11_format_based_semantics.xlsx / OK-01</span><pre>以下は「都道府県」という列のデータです（シート: OK-01）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;青森県&#x27;
+  行4: &#x27;岩手県&#x27;
+  行5: &#x27;宮城県&#x27;
+  行6: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_11_format_based_semantics.xlsx / OK-02</span><pre>以下は「2020年」という列のデータです（シート: OK-02）。
+  行2: &#x27;5250&#x27;
+  行3: &#x27;1246&#x27;
+  行4: &#x27;1227&#x27;
+  行5: &#x27;2302&#x27;
+  行6: &#x27;960&#x27;</pre></li><li><span class="src">rule_11_format_based_semantics.xlsx / OK-02</span><pre>以下は「2021年」という列のデータです（シート: OK-02）。
+  行2: &#x27;5224&#x27;
+  行3: &#x27;1228&#x27;
+  行4: &#x27;1211&#x27;
+  行5: &#x27;2292&#x27;
+  行6: &#x27;941&#x27;</pre></li><li><span class="src">rule_11_format_based_semantics.xlsx / NG-01</span><pre>以下は「ステータス」という列のデータです（シート: NG-01）。
+  行2: &#x27;正常&#x27;
+  行3: &#x27;異常&#x27;
+  行4: &#x27;正常&#x27;</pre></li><li><span class="src">rule_11_format_based_semantics.xlsx / NG-02</span><pre>以下は「名前」という列のデータです（シート: NG-02）。
+  行2: &#x27;太郎&#x27;
+  行3: &#x27;花子&#x27;
+  行4: &#x27;次郎&#x27;</pre></li><li><span class="src">rule_11_format_based_semantics.xlsx / NG-03</span><pre>以下は「ステータス」という列のデータです（シート: NG-03）。
+  行2: &#x27;正常&#x27;
+  行3: &#x27;異常&#x27;
+  行4: &#x27;警告&#x27;</pre></li><li><span class="src">rule_11_format_based_semantics.xlsx / NG-04</span><pre>以下は「商品名」という列のデータです（シート: NG-04）。
+  行2: &#x27;りんご&#x27;
+  行3: &#x27;みかん&#x27;
+  行4: &#x27;大根&#x27;
+  行5: &#x27;きゅうり&#x27;
+  行6: &#x27;キャベツ&#x27;</pre></li><li><span class="src">rule_12_merged_cells.xlsx / NG-01、rule_22_header_start_position.xlsx / NG-01（2 回）</span><pre>以下は「都道府県」という列のデータです（シート: NG-01）。
+  行3: &#x27;北海道&#x27;
+  行4: &#x27;青森県&#x27;
+  行5: &#x27;岩手県&#x27;
+  行6: &#x27;宮城県&#x27;
+  行7: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_12_merged_cells.xlsx / NG-02</span><pre>以下は「都道府県」という列のデータです（シート: NG-02）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;東北（青森・岩手）&#x27;
+  行5: &#x27;宮城県&#x27;
+  行6: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_14_csv_single_line_NG-01.csv / rule_14_csv_single_line_NG-01</span><pre>以下は「都道府県」という列のデータです（シート: rule_14_csv_single_line_NG-01）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;（道央）&#x27;
+  行4: &#x27;青森県&#x27;
+  行5: &#x27;青森市&#x27;</pre></li><li><span class="src">rule_14_csv_single_line_OK.csv / rule_14_csv_single_line_OK</span><pre>以下は「都道府県」という列のデータです（シート: rule_14_csv_single_line_OK）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;青森県&#x27;</pre></li><li><span class="src">rule_15_csv_quoting_NG-01.csv / rule_15_csv_quoting_NG-01</span><pre>以下は「所在地」という列のデータです（シート: rule_15_csv_quoting_NG-01）。
+  行3: &#x27;摘要&#x27;</pre></li><li><span class="src">rule_15_csv_quoting_NG-01.csv / rule_15_csv_quoting_NG-01</span><pre>以下は「東京都」という列のデータです（シート: rule_15_csv_quoting_NG-01）。
+  行3: &#x27;見積 1&#x27;</pre></li><li><span class="src">rule_15_csv_quoting_OK.csv / rule_15_csv_quoting_OK</span><pre>以下は「項目」という列のデータです（シート: rule_15_csv_quoting_OK）。
+  行2: &#x27;所在地&#x27;
+  行3: &#x27;摘要&#x27;</pre></li><li><span class="src">rule_17_omit_column.xlsx / OK</span><pre>以下は「都道府県」という列のデータです（シート: OK）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;北海道&#x27;
+  行4: &#x27;北海道&#x27;
+  行5: &#x27;北海道&#x27;
+  行6: &#x27;北海道&#x27;
+  行7: &#x27;北海道&#x27;
+  行8: &#x27;北海道&#x27;
+  行9: &#x27;北海道&#x27;
+  行10: &#x27;北海道&#x27;
+  行11: &#x27;青森県&#x27;
+  行12: &#x27;青森県&#x27;
+  行13: &#x27;青森県&#x27;
+  行14: &#x27;岩手県&#x27;
+  行15: &#x27;岩手県&#x27;
+  行16: &#x27;岩手県&#x27;
+  行17: &#x27;宮城県&#x27;
+  行18: &#x27;宮城県&#x27;
+  行19: &#x27;宮城県&#x27;
+  行20: &#x27;秋田県&#x27;
+  行21: &#x27;山形県&#x27;
+  行22: &#x27;山形県&#x27;
+  行23: &#x27;福島県&#x27;
+  行24: &#x27;福島県&#x27;
+  行25: &#x27;福島県&#x27;
+  行26: &#x27;福島県&#x27;
+  行27: &#x27;茨城県&#x27;
+  行28: &#x27;茨城県&#x27;
+  行29: &#x27;茨城県&#x27;
+  行30: &#x27;茨城県&#x27;
+  行31: &#x27;茨城県&#x27;</pre></li><li><span class="src">rule_17_omit_column.xlsx / OK</span><pre>以下は「市区町村」という列のデータです（シート: OK）。
+  行2: &#x27;札幌市&#x27;
+  行3: &#x27;函館市&#x27;
+  行4: &#x27;小樽市&#x27;
+  行5: &#x27;旭川市&#x27;
+  行6: &#x27;釧路市&#x27;
+  行7: &#x27;帯広市&#x27;
+  行8: &#x27;北見市&#x27;
+  行9: &#x27;苫小牧市&#x27;
+  行10: &#x27;江別市&#x27;
+  行11: &#x27;青森市&#x27;
+  行12: &#x27;弘前市&#x27;
+  行13: &#x27;八戸市&#x27;
+  行14: &#x27;盛岡市&#x27;
+  行15: &#x27;一関市&#x27;
+  行16: &#x27;奥州市&#x27;
+  行17: &#x27;仙台市&#x27;
+  行18: &#x27;石巻市&#x27;
+  行19: &#x27;大崎市&#x27;
+  行20: &#x27;秋田市&#x27;
+  行21: &#x27;山形市&#x27;
+  行22: &#x27;鶴岡市&#x27;
+  行23: &#x27;福島市&#x27;
+  行24: &#x27;会津若松市&#x27;
+  行25: &#x27;郡山市&#x27;
+  行26: &#x27;いわき市&#x27;
+  行27: &#x27;水戸市&#x27;
+  行28: &#x27;日立市&#x27;
+  行29: &#x27;土浦市&#x27;
+  行30: &#x27;古河市&#x27;
+  行31: &#x27;取手市&#x27;</pre></li><li><span class="src">rule_17_omit_column.xlsx / NG-01</span><pre>以下は「都道府県」という列のデータです（シート: NG-01）。
+  行2: &#x27;北海道&#x27;
+  行11: &#x27;青森県&#x27;
+  行14: &#x27;岩手県&#x27;
+  行17: &#x27;宮城県&#x27;
+  行20: &#x27;秋田県&#x27;
+  行21: &#x27;山形県&#x27;
+  行23: &#x27;福島県&#x27;
+  行27: &#x27;茨城県&#x27;</pre></li><li><span class="src">rule_17_omit_column.xlsx / NG-01</span><pre>以下は「市区町村」という列のデータです（シート: NG-01）。
+  行2: &#x27;札幌市&#x27;
+  行3: &#x27;函館市&#x27;
+  行4: &#x27;小樽市&#x27;
+  行5: &#x27;旭川市&#x27;
+  行6: &#x27;釧路市&#x27;
+  行7: &#x27;帯広市&#x27;
+  行8: &#x27;北見市&#x27;
+  行9: &#x27;苫小牧市&#x27;
+  行10: &#x27;江別市&#x27;
+  行11: &#x27;青森市&#x27;
+  行12: &#x27;弘前市&#x27;
+  行13: &#x27;八戸市&#x27;
+  行14: &#x27;盛岡市&#x27;
+  行15: &#x27;一関市&#x27;
+  行16: &#x27;奥州市&#x27;
+  行17: &#x27;仙台市&#x27;
+  行18: &#x27;石巻市&#x27;
+  行19: &#x27;大崎市&#x27;
+  行20: &#x27;秋田市&#x27;
+  行21: &#x27;山形市&#x27;
+  行22: &#x27;鶴岡市&#x27;
+  行23: &#x27;福島市&#x27;
+  行24: &#x27;会津若松市&#x27;
+  行25: &#x27;郡山市&#x27;
+  行26: &#x27;いわき市&#x27;
+  行27: &#x27;水戸市&#x27;
+  行28: &#x27;日立市&#x27;
+  行29: &#x27;土浦市&#x27;
+  行30: &#x27;古河市&#x27;
+  行31: &#x27;取手市&#x27;</pre></li><li><span class="src">rule_17_omit_column.xlsx / NG-03</span><pre>以下は「薬剤名」という列のデータです（シート: NG-03）。
+  行2: &#x27;鎮痛剤A-1&#x27;
+  行3: &#x27;〃&#x27;
+  行4: &#x27;〃&#x27;
+  行5: &#x27;〃&#x27;</pre></li><li><span class="src">rule_17_omit_column.xlsx / NG-04</span><pre>以下は「薬剤名」という列のデータです（シート: NG-04）。
+  行2: &#x27;鎮痛剤A-1&#x27;
+  行3: &#x27;同上&#x27;
+  行4: &#x27;同上&#x27;
+  行5: &#x27;同上&#x27;</pre></li><li><span class="src">rule_18_unique_column.xlsx / OK</span><pre>以下は「会社」という列のデータです（シート: OK）。
+  行2: &#x27;A&#x27;
+  行3: &#x27;B&#x27;
+  行4: &#x27;C&#x27;</pre></li><li><span class="src">rule_18_unique_column.xlsx / NG-01</span><pre>以下は「会社」という列のデータです（シート: NG-01）。
+  行3: &#x27;A&#x27;
+  行4: &#x27;B&#x27;
+  行5: &#x27;C&#x27;</pre></li><li><span class="src">rule_18_unique_column.xlsx / NG-02</span><pre>以下は「会社」という列のデータです（シート: NG-02）。
+  行3: &#x27;A&#x27;
+  行4: &#x27;B&#x27;
+  行5: &#x27;C&#x27;</pre></li><li><span class="src">rule_18_unique_column.xlsx / NG-03</span><pre>以下は「カテゴリ」という列のデータです（シート: NG-03）。
+  行2: &#x27;A&#x27;
+  行3: &#x27;B&#x27;
+  行4: &#x27;C&#x27;</pre></li><li><span class="src">rule_18_unique_column.xlsx / NG-04</span><pre>以下は「会社」という列のデータです（シート: NG-04）。
+  行3: &#x27;A&#x27;
+  行4: &#x27;B&#x27;
+  行5: &#x27;C&#x27;</pre></li><li><span class="src">rule_19_normalize_nominals.xlsx / OK</span><pre>以下は「設問1」という列のデータです（シート: OK）。
+  行2: &#x27;取組予定&#x27;
+  行3: &#x27;取組予定&#x27;
+  行4: &#x27;取組済&#x27;
+  行5: &#x27;取組予定&#x27;
+  行6: &#x27;未定&#x27;
+  行7: &#x27;取組予定&#x27;
+  行8: &#x27;取組予定&#x27;
+  行9: &#x27;取組予定&#x27;
+  行10: &#x27;取組予定&#x27;
+  行11: &#x27;取組予定&#x27;
+  行12: &#x27;未定&#x27;
+  行13: &#x27;取組済&#x27;
+  行14: &#x27;未定&#x27;
+  行15: &#x27;取組済&#x27;
+  行16: &#x27;取組予定&#x27;
+  行17: &#x27;取組済&#x27;
+  行18: &#x27;取組済&#x27;
+  行19: &#x27;未定&#x27;
+  行20: &#x27;取組予定&#x27;
+  行21: &#x27;未定&#x27;
+  行22: &#x27;未定&#x27;
+  行23: &#x27;未定&#x27;
+  行24: &#x27;取組済&#x27;
+  行25: &#x27;取組予定&#x27;
+  行26: &#x27;取組済&#x27;
+  行27: &#x27;未定&#x27;
+  行28: &#x27;取組済&#x27;
+  行29: &#x27;未定&#x27;
+  行30: &#x27;取組予定&#x27;
+  行31: &#x27;取組予定&#x27;
+  行32: &#x27;未定&#x27;
+  行33: &#x27;取組済&#x27;
+  行34: &#x27;取組予定&#x27;
+  行35: &#x27;取組予定&#x27;
+  行36: &#x27;取組予定&#x27;
+  行37: &#x27;未定&#x27;
+  行38: &#x27;未定&#x27;
+  行39: &#x27;取組済&#x27;
+  行40: &#x27;未定&#x27;
+  行41: &#x27;取組予定&#x27;
+  行42: &#x27;取組予定&#x27;
+  行43: &#x27;未定&#x27;
+  行44: &#x27;取組予定&#x27;
+  行45: &#x27;取組済&#x27;
+  行46: &#x27;未定&#x27;
+  行47: &#x27;取組済&#x27;
+  行48: &#x27;取組済&#x27;
+  行49: &#x27;未定&#x27;
+  行50: &#x27;取組予定&#x27;
+  行51: &#x27;未定&#x27;</pre></li><li><span class="src">rule_20_split_other.xlsx / OK</span><pre>以下は「設問1」という列のデータです（シート: OK）。
+  行2: &#x27;1. 取組済&#x27;
+  行3: &#x27;1. 取組済&#x27;
+  行4: &#x27;4. その他&#x27;
+  行5: &#x27;1. 取組済&#x27;
+  行6: &#x27;1. 取組済&#x27;
+  行7: &#x27;3. 未定&#x27;
+  行8: &#x27;1. 取組済&#x27;
+  行9: &#x27;2. 取組予定&#x27;
+  行10: &#x27;1. 取組済&#x27;
+  行11: &#x27;4. その他&#x27;
+  行12: &#x27;2. 取組予定&#x27;
+  行13: &#x27;3. 未定&#x27;
+  行14: &#x27;3. 未定&#x27;
+  行15: &#x27;4. その他&#x27;
+  行16: &#x27;3. 未定&#x27;
+  行17: &#x27;2. 取組予定&#x27;
+  行18: &#x27;2. 取組予定&#x27;
+  行19: &#x27;3. 未定&#x27;
+  行20: &#x27;2. 取組予定&#x27;
+  行21: &#x27;1. 取組済&#x27;
+  行22: &#x27;3. 未定&#x27;
+  行23: &#x27;2. 取組予定&#x27;
+  行24: &#x27;2. 取組予定&#x27;
+  行25: &#x27;2. 取組予定&#x27;
+  行26: &#x27;1. 取組済&#x27;
+  行27: &#x27;4. その他&#x27;
+  行28: &#x27;1. 取組済&#x27;
+  行29: &#x27;3. 未定&#x27;
+  行30: &#x27;3. 未定&#x27;
+  行31: &#x27;4. その他&#x27;
+  行32: &#x27;3. 未定&#x27;
+  行33: &#x27;1. 取組済&#x27;
+  行34: &#x27;3. 未定&#x27;
+  行35: &#x27;3. 未定&#x27;
+  行36: &#x27;3. 未定&#x27;
+  行37: &#x27;2. 取組予定&#x27;
+  行38: &#x27;1. 取組済&#x27;
+  行39: &#x27;1. 取組済&#x27;
+  行40: &#x27;1. 取組済&#x27;
+  行41: &#x27;1. 取組済&#x27;
+  行42: &#x27;2. 取組予定&#x27;
+  行43: &#x27;1. 取組済&#x27;
+  行44: &#x27;1. 取組済&#x27;
+  行45: &#x27;1. 取組済&#x27;
+  行46: &#x27;2. 取組予定&#x27;
+  行47: &#x27;2. 取組予定&#x27;
+  行48: &#x27;1. 取組済&#x27;
+  行49: &#x27;4. その他&#x27;
+  行50: &#x27;2. 取組予定&#x27;
+  行51: &#x27;1. 取組済&#x27;</pre></li><li><span class="src">rule_22_header_start_position.xlsx / NG-03</span><pre>以下は「名称」という列のデータです（シート: NG-03）。
+  行4: &#x27;北海道&#x27;
+  行5: &#x27;青森県&#x27;
+  行6: &#x27;岩手県&#x27;
+  行7: &#x27;宮城県&#x27;
+  行8: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_22_header_start_position_NG-01.csv / rule_22_header_start_position_NG-01</span><pre>以下は「都道府県」という列のデータです（シート: rule_22_header_start_position_NG-01）。
+  行4: &#x27;北海道&#x27;
+  行5: &#x27;青森県&#x27;
+  行6: &#x27;岩手県&#x27;
+  行7: &#x27;宮城県&#x27;
+  行8: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_22_header_start_position_OK.csv / rule_22_header_start_position_OK</span><pre>以下は「都道府県」という列のデータです（シート: rule_22_header_start_position_OK）。
+  行2: &#x27;北海道&#x27;
+  行3: &#x27;青森県&#x27;
+  行4: &#x27;岩手県&#x27;
+  行5: &#x27;宮城県&#x27;
+  行6: &#x27;秋田県&#x27;</pre></li><li><span class="src">rule_25_data_units.xlsx / OK</span><pre>以下は「地域名」という列のデータです（シート: OK）。
+  行2: &#x27;A市&#x27;
+  行3: &#x27;B市&#x27;
+  行4: &#x27;C市&#x27;
+  行5: &#x27;D市&#x27;</pre></li><li><span class="src">rule_25_data_units.xlsx / OK-Implied</span><pre>以下は「商品名」という列のデータです（シート: OK-Implied）。
+  行2: &#x27;商品A&#x27;
+  行3: &#x27;商品B&#x27;
+  行4: &#x27;商品C&#x27;
+  行5: &#x27;商品D&#x27;</pre></li><li><span class="src">rule_25_data_units.xlsx / NG-01</span><pre>以下は「名前」という列のデータです（シート: NG-01）。
+  行2: &#x27;X&#x27;
+  行3: &#x27;Y&#x27;
+  行4: &#x27;Z&#x27;
+  行5: &#x27;W&#x27;</pre></li><li><span class="src">rule_25_data_units.xlsx / NG-02</span><pre>以下は「エリア」という列のデータです（シート: NG-02）。
+  行2: &#x27;北エリア&#x27;
+  行3: &#x27;南エリア&#x27;
+  行4: &#x27;東エリア&#x27;
+  行5: &#x27;西エリア&#x27;</pre></li></ol></details>
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>対象は推定された行ヘッダー列（stub_cols）だけで、空セルは送られない（harunobu/rules/level2/L2_02_item_abbreviation.py:109-124）。</li><li>先頭 50 件まで。1 行 1 値で <code>行{row}: {repr(value)}</code>（Python の repr なので文字列は '…' で囲まれる）（harunobu/core/ai_semantic_checker.py:442-443）。</li><li>シート名もプロンプトに入る。行番号は Excel の 1 始まりの行番号。</li><li>今回の最長は rule_20_split_other.xlsx / OK の 1,537 文字（51 行の列が 50 行に切り詰められた）。</li><li><b>空セルは送らないので、空白による繰り返し省略は行番号の飛びでしか伝わらない。</b>rule_17_omit_column.xlsx / NG-01 の「都道府県」列は <code>行2: '北海道'</code> の次が <code>行11: '青森県'</code> になっている（下の「全キャプチャのデータ部分」参照）。プロンプトは「空白セルが連続」を省略の例に挙げているが、空白そのものは LLM に見えていない。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>[{&quot;row&quot;: int, &quot;value&quot;: str, &quot;reason&quot;: str}] — 送った行番号に無い row は捨てる</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:467-481</span></p>
+</section>
+<section class="method" id="batch_infer_units_from_headers">
+  <header class="mh">
+    <h3><code>batch_infer_units_from_headers</code></h3>
+    <span class="pill real">実解析 54 件</span>
+  </header>
+  <p class="purpose">ヘッダーに単位が書かれていない数値列について、単位が推定できるかを列ごとに判定させる。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>L3-04</dd></div>
+    <div><dt>モード</dt><dd>thorough</dd></div>
+    <div><dt>表データの表現</dt><dd>列ごとに「ヘッダー + サンプル値 5 個」を番号付きで 1 行に</dd></div>
+    <div><dt>共通前置き</dt><dd>あり</dd></div>
+    <div><dt>この例の出所</dt><dd>実解析: <code>rule_25_data_units.xlsx</code> / シート <code>NG-01</code>（ルール L3-04）</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre><span class="ctx">あなたは日本の行政データを分析するエキスパートです。
+対象データは以下のような行政機関のExcelファイルです:
+- こども家庭庁（保育所・福祉データ）
+- 厚生労働省（医療・介護・雇用データ）
+- 文部科学省（教育データ）
+- 総務省（地方財政・水道事業データ）
+
+行政データ特有の表現:
+- 秘匿値: 「-」「×」「…」「＊」「－」（個人情報保護上の非公開）
+- 単位省略: 「（百万円）」をヘッダーに記載し数値列は単位なし
+- 年度表記: 「令和5年度」「R5」「2023年度」が混在することがある
+- 地域コード: JIS X 0401/0402 準拠の都道府県・市区町村コード
+- 「0」始まりコード: 都道府県コード「01」等は文字列として保持すべき
+</span>
+以下の複数の列について、それぞれヘッダーからデータ単位が明記・推定可能か判断してください。
+
+<span class="dat">  [0] ヘッダー: 「数値1」, サンプル値: 12.4, 18.9, 25, 9.6</span>
+<span class="dat">  [1] ヘッダー: 「データ」, サンプル値: 88, 73.5, 92.1, 64.2</span>
+<span class="dat">  [2] ヘッダー: 「スコア」, サンプル値: 3.5, 4.1, 5.7, 2.9</span>
+
+判断基準:
+- ヘッダーに「（円）」「（人）」などの単位が括弧内に記載 → 単位あり
+- ヘッダー名自体が単位を暗示: 「人口」→人, 「金額」→円, 「受診率」→%, 「面積」→㎡
+- ヘッダーが「A」「B」など単位が推定不可能 → 単位なし
+
+JSON回答（インデックス順の配列）:
+[{&quot;has_unit&quot;: true/false, &quot;inferred_unit&quot;: &quot;推定単位またはnull&quot;, &quot;explanation&quot;: &quot;判断理由&quot;}]</pre></div>
+  <details class="vars"><summary>全キャプチャのデータ部分（54 件、異なる内容は 25 通り）</summary><p class="hint">このメソッドの全プロンプトに共通する行（テンプレート）を除いた残りの行だけを、内容が同じものをまとめて並べたもの。テンプレート部分は上の全文と同じ。</p><ol class="varlist"><li><span class="src">rule_02_multiple_tables.xlsx / OK、rule_02_multiple_tables.xlsx / NG-01、rule_02_multiple_tables_NG-01.csv / rule_02_multiple_tables_NG-01、rule_02_multiple_tables_OK.csv / rule_02_multiple_tables_OK ほか 19 件（23 回）</span><pre>  [0] ヘッダー: 「2020年」, サンプル値: 5250, 1246, 1227, 2302, 960
+  [1] ヘッダー: 「2021年」, サンプル値: 5224, 1228, 1211, 2292, 941
+  [2] ヘッダー: 「2022年」, サンプル値: 5188, 1211, 1195, 2280, 923
+  [3] ヘッダー: 「2023年」, サンプル値: 5140, 1193, 1178, 2266, 905
+  [4] ヘッダー: 「2024年」, サンプル値: 5092, 1175, 1162, 2252, 888</pre></li><li><span class="src">rule_02_multiple_tables.xlsx / NG-01</span><pre>  [0] ヘッダー: 「2020年」, サンプル値: 83424, 9646, 15275, 7282, 11638</pre></li><li><span class="src">rule_03_fragmented_data.xlsx / NG-01</span><pre>  [0] ヘッダー: 「2020年」, サンプル値: 5250, 1246
+  [1] ヘッダー: 「2021年」, サンプル値: 5224, 1228
+  [2] ヘッダー: 「2022年」, サンプル値: 5188, 1211
+  [3] ヘッダー: 「2023年」, サンプル値: 5140, 1193
+  [4] ヘッダー: 「2024年」, サンプル値: 5092, 1175</pre></li><li><span class="src">rule_05_missing_column_names.xlsx / NG-01</span><pre>  [0] ヘッダー: 「2020年」, サンプル値: 5250, 1246, 1227, 2302, 960
+  [1] ヘッダー: 「2022年」, サンプル値: 5188, 1211, 1195, 2280, 923
+  [2] ヘッダー: 「2024年」, サンプル値: 5092, 1175, 1162, 2252, 888</pre></li><li><span class="src">rule_06_space_formatting.xlsx / NG-02</span><pre>  [0] ヘッダー: 「2020年」, サンプル値: 5250, 1246, 1227, 2302, 960
+  [1] ヘッダー: 「2021  年」, サンプル値: 5224, 1228, 1211, 2292, 941
+  [2] ヘッダー: 「2022年」, サンプル値: 5188, 1211, 1195, 2280, 923
+  [3] ヘッダー: 「2023年」, サンプル値: 5140, 1193, 1178, 2266, 905
+  [4] ヘッダー: 「2024年」, サンプル値: 5092, 1175, 1162, 2252, 888</pre></li><li><span class="src">rule_06_space_formatting.xlsx / NG-03</span><pre>  [0] ヘッダー: 「2022年」, サンプル値: 5188, 1211, 1195, 2280, 923
+  [1] ヘッダー: 「2023年」, サンプル値: 5140, 1193, 1178, 2266, 905
+  [2] ヘッダー: 「2024年」, サンプル値: 5092, 1175, 1162, 2252, 888</pre></li><li><span class="src">rule_06_space_formatting_NG-01.csv / rule_06_space_formatting_NG-01</span><pre>  [0] ヘッダー: 「2020  年」, サンプル値: 5250, 1246</pre></li><li><span class="src">rule_06_space_formatting_OK-English.csv / rule_06_space_formatting_OK-English</span><pre>  [0] ヘッダー: 「Population」, サンプル値: 5250, 1246</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-04</span><pre>  [0] ヘッダー: 「商品A」, サンプル値: 84, 82, 27
+  [1] ヘッダー: 「商品B」, サンプル値: 11, 90, 92
+  [2] ヘッダー: 「商品C」, サンプル値: 92, 42, 51</pre></li><li><span class="src">rule_10_excel_objects.xlsx / OK-01、rule_10_excel_objects.xlsx / OK-02、rule_10_excel_objects.xlsx / NG-01、rule_10_excel_objects.xlsx / NG-02（4 回）</span><pre>  [0] ヘッダー: 「2023年」, サンプル値: 5250, 1246, 1227, 2302, 960
+  [1] ヘッダー: 「2024年」, サンプル値: 5224, 1228, 1211, 2292, 941</pre></li><li><span class="src">rule_11_format_based_semantics.xlsx / NG-01、rule_11_format_based_semantics.xlsx / NG-03（2 回）</span><pre>  [0] ヘッダー: 「値」, サンプル値: 100, 50, 80</pre></li><li><span class="src">rule_11_format_based_semantics.xlsx / NG-05</span><pre>  [0] ヘッダー: 「年」, サンプル値: 2024, 2025, 2026, 2027</pre></li><li><span class="src">rule_16_number_column.xlsx / OK、rule_16_number_column.xlsx / NG-02、rule_21_formula_convert_integer.xlsx / OK（3 回）</span><pre>  [0] ヘッダー: 「利益」, サンプル値: 150000, 50000, -50000, -50000, 150000</pre></li><li><span class="src">rule_16_number_column.xlsx / NG-01</span><pre>  [0] ヘッダー: 「利益」, サンプル値: 150000, 50000, ▲50,000, ▲50,000, 150000</pre></li><li><span class="src">rule_17_omit_column.xlsx / NG-02</span><pre>  [0] ヘッダー: 「薬剤名」, サンプル値: 鎮痛剤A-1, 2, 3, 4</pre></li><li><span class="src">rule_18_unique_column.xlsx / OK</span><pre>  [0] ヘッダー: 「財務情報 営業利益」, サンプル値: 15000, 15000, 15000</pre></li><li><span class="src">rule_18_unique_column.xlsx / NG-01</span><pre>  [0] ヘッダー: 「営業利益」, サンプル値: 15000, 15000, 15000</pre></li><li><span class="src">rule_18_unique_column.xlsx / NG-02</span><pre>  [0] ヘッダー: 「千円」, サンプル値: 120000, 130000, 125000
+  [1] ヘッダー: 「千円」, サンプル値: 15000, 15000, 15000</pre></li><li><span class="src">rule_18_unique_column.xlsx / NG-03</span><pre>  [0] ヘッダー: 「値」, サンプル値: 15000, 15000, 15000</pre></li><li><span class="src">rule_18_unique_column.xlsx / NG-04</span><pre>  [0] ヘッダー: 「国内」, サンプル値: 100, 100, 100
+  [1] ヘッダー: 「海外」, サンプル値: 50, 50, 50
+  [2] ヘッダー: 「国内」, サンプル値: 30, 30, 30
+  [3] ヘッダー: 「海外」, サンプル値: 20, 20, 20</pre></li><li><span class="src">rule_21_formula_convert_integer.xlsx / NG-02</span><pre>  [0] ヘッダー: 「年」, サンプル値: 2025, 2025, 2025, 2025, 2025
+  [1] ヘッダー: 「月」, サンプル値: 1, 2, 3, 4, 5
+  [2] ヘッダー: 「利益」, サンプル値: 150000, 50000, -50000, -50000, 150000</pre></li><li><span class="src">rule_22_header_start_position.xlsx / NG-03</span><pre>  [0] ヘッダー: 「千人」, サンプル値: 1004, 1005, 1006, 1007, 1008
+  [1] ヘッダー: 「千人」, サンプル値: 1005, 1006, 1007, 1008, 1009
+  [2] ヘッダー: 「千人」, サンプル値: 1006, 1007, 1008, 1009, 1010
+  [3] ヘッダー: 「千人」, サンプル値: 1007, 1008, 1009, 1010, 1011
+  [4] ヘッダー: 「千人」, サンプル値: 1008, 1009, 1010, 1011, 1012</pre></li><li><span class="src">rule_22_header_start_position_NG-01.csv / rule_22_header_start_position_NG-01、rule_22_header_start_position_OK.csv / rule_22_header_start_position_OK（2 回）</span><pre>  [0] ヘッダー: 「2020年」, サンプル値: 2000, 2001, 2002, 2003, 2004
+  [1] ヘッダー: 「2021年」, サンプル値: 2001, 2002, 2003, 2004, 2005
+  [2] ヘッダー: 「2022年」, サンプル値: 2002, 2003, 2004, 2005, 2006
+  [3] ヘッダー: 「2023年」, サンプル値: 2003, 2004, 2005, 2006, 2007
+  [4] ヘッダー: 「2024年」, サンプル値: 2004, 2005, 2006, 2007, 2008</pre></li><li><span class="src">rule_25_data_units.xlsx / NG-01</span><pre>  [0] ヘッダー: 「数値1」, サンプル値: 12.4, 18.9, 25, 9.6
+  [1] ヘッダー: 「データ」, サンプル値: 88, 73.5, 92.1, 64.2
+  [2] ヘッダー: 「スコア」, サンプル値: 3.5, 4.1, 5.7, 2.9</pre></li><li><span class="src">rule_25_data_units.xlsx / NG-02</span><pre>  [0] ヘッダー: 「数量」, サンプル値: 80, 110, 95, 130</pre></li></ol></details>
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>決定論で単位を判定できなかった数値列だけが対象（harunobu/rules/level3/L3_04_data_units.py:186-204）。</li><li>サンプル値は本文の先頭 10 行から非空の値を最大 5 個（同 L3_04_data_units.py:248-259）。さらにチェッカー側でも [:5]（harunobu/core/ai_semantic_checker.py:155）。</li><li>数値は Python の str() のまま（例: 12.4, 1200000）。桁区切りなし。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>[{&quot;has_unit&quot;: bool, &quot;inferred_unit&quot;: str|null, &quot;explanation&quot;: str}]（インデックス順、足りない分は既定値で埋める）</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:172-189</span></p>
+</section>
+<section class="method" id="check_wide_format_semantic">
+  <header class="mh">
+    <h3><code>check_wide_format_semantic</code></h3>
+    <span class="pill real">実解析 20 件</span>
+  </header>
+  <p class="purpose">ヘッダーが都道府県・性別などのカテゴリ値を横に並べた「横持ち」になっていないかを判定させる。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>L3-09</dd></div>
+    <div><dt>モード</dt><dd>thorough</dd></div>
+    <div><dt>表データの表現</dt><dd>ヘッダー行（最大 30）+ 本文の先頭 3 行を &#x27; | &#x27; 区切りで</dd></div>
+    <div><dt>共通前置き</dt><dd>あり</dd></div>
+    <div><dt>この例の出所</dt><dd>実解析: <code>rule_18_unique_column.xlsx</code> / シート <code>NG-04</code>（ルール L3-09）</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre><span class="ctx">あなたは日本の行政データを分析するエキスパートです。
+対象データは以下のような行政機関のExcelファイルです:
+- こども家庭庁（保育所・福祉データ）
+- 厚生労働省（医療・介護・雇用データ）
+- 文部科学省（教育データ）
+- 総務省（地方財政・水道事業データ）
+
+行政データ特有の表現:
+- 秘匿値: 「-」「×」「…」「＊」「－」（個人情報保護上の非公開）
+- 単位省略: 「（百万円）」をヘッダーに記載し数値列は単位なし
+- 年度表記: 「令和5年度」「R5」「2023年度」が混在することがある
+- 地域コード: JIS X 0401/0402 準拠の都道府県・市区町村コード
+- 「0」始まりコード: 都道府県コード「01」等は文字列として保持すべき
+</span>
+以下はスプレッドシートのヘッダー行の値です:
+<span class="dat">&#x27;会社&#x27;, &#x27;国内&#x27;, &#x27;海外&#x27;, &#x27;国内&#x27;, &#x27;海外&#x27;</span>
+最初の3行のデータ:
+<span class="dat">  A | 100 | 50 | 30 | 20</span>
+<span class="dat">  B | 100 | 50 | 30 | 20</span>
+<span class="dat">  C | 100 | 50 | 30 | 20</span>
+
+
+これらのヘッダーが「カテゴリ値として横持ち（ワイド形式）」になっていないか判断してください。
+
+横持ちの例（これらを検出してください）:
+- 47都道府県名（北海道, 青森県, 岩手県, ...）が列名になっている
+- 性別（男性, 女性, 不明）が列名になっている
+- 年齢区分（0-4歳, 5-9歳, ...）が列名になっている
+- 産業分類が列名になっている
+- 学校種別や施設種別が列名になっている
+
+※ 年・月・期などの時間軸は別ルールでチェック済みのため除外してください。
+※ 通常の項目名（名称, 人口, 面積など）は横持ちではありません。
+
+JSON回答:
+{&quot;is_wide&quot;: true/false, &quot;category_type&quot;: &quot;カテゴリの種類（例: 都道府県, 性別）&quot;,
+&quot;details&quot;: &quot;詳細説明&quot;, &quot;confidence&quot;: 0.0から1.0}</pre></div>
+  <details class="vars"><summary>全キャプチャのデータ部分（20 件、異なる内容は 18 通り）</summary><p class="hint">このメソッドの全プロンプトに共通する行（テンプレート）を除いた残りの行だけを、内容が同じものをまとめて並べたもの。テンプレート部分は上の全文と同じ。</p><ol class="varlist"><li><span class="src">rule_05_missing_column_names.xlsx / NG-02</span><pre>&#x27;001&#x27;, &#x27;002&#x27;, &#x27;003&#x27;, &#x27;004&#x27;, &#x27;005&#x27;, &#x27;006&#x27;
+  北海道 | 5250 | 5224 | 5188 | 5140 | 5092
+  青森県 | 1246 | 1228 | 1211 | 1193 | 1175
+  岩手県 | 1227 | 1211 | 1195 | 1178 | 1162</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / OK</span><pre>&#x27;区分&#x27;, &#x27;企業等数&#x27;, &#x27;売上金額（百万円）&#x27;, &#x27;費用総額（百万円）&#x27;
+  総計 | 1188389 | 391445 | 355943
+  A | 50384 | 69565 | 63683
+  B | 154138 | 50468 | 45332</pre></li><li><span class="src">rule_07_one_cell_one_data.xlsx / NG-04</span><pre>&#x27;商品
+月&#x27;, &#x27;商品A&#x27;, &#x27;商品B&#x27;, &#x27;商品C&#x27;
+  1月 | 84 | 11 | 92
+  2月 | 82 | 90 | 42
+  3月 | 27 | 92 | 51</pre></li><li><span class="src">rule_08_platform_dependent_chars_NG-CP932.csv / rule_08_platform_dependent_chars_NG-CP932、rule_08_platform_dependent_chars_OK-UTF8.csv / rule_08_platform_dependent_chars_OK-UTF8（2 回）</span><pre>&#x27;番号&#x27;, &#x27;章&#x27;, &#x27;会社名&#x27;, &#x27;単位メモ&#x27;
+  ① | Ⅲ | ㈱サンプル | ㍉
+  ⑤ | Ⅳ | 参照 | ㌔㌢
+  ⑩ | Ⅴ | 通常会社 | 通常メモ</pre></li><li><span class="src">rule_16_number_column.xlsx / OK、rule_21_formula_convert_integer.xlsx / OK（2 回）</span><pre>&#x27;年月&#x27;, &#x27;売上&#x27;, &#x27;費用&#x27;, &#x27;利益&#x27;
+  2025-01-01 00:00:00 | 500000 | 350000 | 150000
+  2025-02-01 00:00:00 | 400000 | 350000 | 50000
+  2025-03-01 00:00:00 | 300000 | 350000 | -50000</pre></li><li><span class="src">rule_16_number_column.xlsx / NG-01</span><pre>&#x27;年月&#x27;, &#x27;売上&#x27;, &#x27;費用&#x27;, &#x27;利益&#x27;
+  2025-01-01 00:00:00 | 500000 | 350000 | 150000
+  2025-02-01 00:00:00 | 400000 | 350000 | 50000
+  2025-03-01 00:00:00 | 300000 | 350000 | ▲50,000</pre></li><li><span class="src">rule_16_number_column.xlsx / NG-02</span><pre>&#x27;年月&#x27;, &#x27;売上&#x27;, &#x27;費用&#x27;, &#x27;利益&#x27;
+  2025-01-01 00:00:00 | 500000 | 350000 | 150000
+  2025-02-01 00:00:00 | 400000 | 350000 | 50000
+  2025-03-01 00:00:00 | 300000 | 350000円 | -50000</pre></li><li><span class="src">rule_16_number_column.xlsx / NG-03</span><pre>&#x27;年月&#x27;, &#x27;売上&#x27;, &#x27;費用&#x27;, &#x27;利益&#x27;
+  2025-01-01 00:00:00 | 500000 | 350000 | 150000
+  2025-02-01 00:00:00 | ¥400,000 | 350000 | 50000
+  2025-03-01 00:00:00 | ¥300,000 | 350000 | (50000)</pre></li><li><span class="src">rule_16_number_column.xlsx / NG-04</span><pre>&#x27;年月&#x27;, &#x27;売上&#x27;, &#x27;費用&#x27;, &#x27;利益&#x27;
+  2025-01-01 00:00:00 | 500000 | 350000 | 150 000
+  2025-02-01 00:00:00 | 400000 | 350000 | 50 000
+  2025-03-01 00:00:00 | 300000 | 350000 | ▲50 000</pre></li><li><span class="src">rule_16_number_column.xlsx / NG-05</span><pre>&#x27;年月&#x27;, &#x27;売上&#x27;, &#x27;費用&#x27;, &#x27;利益&#x27;
+  2025-01-01 00:00:00 | 500000 | 350000 | 150000
+  2025-02-01 00:00:00 | 400000 | 350000 | 50000
+  2025-03-01 00:00:00 | 300000 | 300000 | 0(a</pre></li><li><span class="src">rule_18_unique_column.xlsx / NG-04</span><pre>&#x27;会社&#x27;, &#x27;国内&#x27;, &#x27;海外&#x27;, &#x27;国内&#x27;, &#x27;海外&#x27;
+  A | 100 | 50 | 30 | 20
+  B | 100 | 50 | 30 | 20
+  C | 100 | 50 | 30 | 20</pre></li><li><span class="src">rule_21_formula_convert_integer.xlsx / NG-01</span><pre>&#x27;年月&#x27;, &#x27;売上&#x27;, &#x27;費用&#x27;, &#x27;利益&#x27;
+  2025-01-01 00:00:00 | 500000 | 350000 | 
+  2025-02-01 00:00:00 | 400000 | 350000 | 
+  2025-03-01 00:00:00 | 300000 | 350000 | </pre></li><li><span class="src">rule_21_formula_convert_integer.xlsx / NG-02</span><pre>&#x27;年&#x27;, &#x27;月&#x27;, &#x27;年月&#x27;, &#x27;売上&#x27;, &#x27;費用&#x27;, &#x27;利益&#x27;
+  2025 | 1 |  | 500000 | 350000 | 150000
+  2025 | 2 |  | 400000 | 350000 | 50000
+  2025 | 3 |  | 300000 | 350000 | -50000</pre></li><li><span class="src">rule_22_header_start_position.xlsx / NG-03</span><pre>&#x27;名称&#x27;, &#x27;千人&#x27;, &#x27;千人&#x27;, &#x27;千人&#x27;, &#x27;千人&#x27;, &#x27;千人&#x27;
+  北海道 | 1004 | 1005 | 1006 | 1007 | 1008
+  青森県 | 1005 | 1006 | 1007 | 1008 | 1009
+  岩手県 | 1006 | 1007 | 1008 | 1009 | 1010</pre></li><li><span class="src">rule_25_data_units.xlsx / OK</span><pre>&#x27;地域名&#x27;, &#x27;売上（円）&#x27;, &#x27;数量（個）&#x27;, &#x27;面積（㎡）&#x27;
+  A市 | 1200000 | 100 | 350
+  B市 | 980000 | 80 | 410
+  C市 | 2100000 | 150 | 290</pre></li><li><span class="src">rule_25_data_units.xlsx / OK-Implied</span><pre>&#x27;商品名&#x27;, &#x27;人口&#x27;, &#x27;金額&#x27;, &#x27;年齢&#x27;
+  商品A | 1500 | 250000 | 25
+  商品B | 3200 | 510000 | 38
+  商品C | 880 | 90000 | 47</pre></li><li><span class="src">rule_25_data_units.xlsx / NG-01</span><pre>&#x27;名前&#x27;, &#x27;数値1&#x27;, &#x27;データ&#x27;, &#x27;スコア&#x27;
+  X | 12.4 | 88 | 3.5
+  Y | 18.9 | 73.5 | 4.1
+  Z | 25 | 92.1 | 5.7</pre></li><li><span class="src">rule_25_data_units.xlsx / NG-02</span><pre>&#x27;エリア&#x27;, &#x27;売上（円）&#x27;, &#x27;数量&#x27;, &#x27;面積（㎡）&#x27;
+  北エリア | 1500 | 80 | 12
+  南エリア | 2200 | 110 | 18
+  東エリア | 1800 | 95 | 15</pre></li></ol></details>
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>ヘッダーは [:30]、サンプル行は [:3]、各行はヘッダー数と同じ列数に切る（harunobu/core/ai_semantic_checker.py:496-503）。</li><li>L3-09 は列数 100 以下で、決定論で横持ちを検出しなかった表だけ AI に回す（harunobu/rules/level3/L3_09_vertical_format.py:204, AI_SAMPLE_ROWS=3 は :71）。</li><li>空セルは空文字になるので ' |  | ' のように並ぶ。日付セルは str(datetime) で <code>2025-01-01 00:00:00</code> になる。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>{&quot;is_wide&quot;: bool, &quot;category_type&quot;: str, &quot;details&quot;: str, &quot;confidence&quot;: float} — confidence ≥ 0.7 で違反扱い（L3_09:223）</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:525-534</span></p>
+</section>
+<section class="method" id="check_choice_variants">
+  <header class="mh">
+    <h3><code>check_choice_variants</code></h3>
+    <span class="pill real">実解析 7 件</span>
+  </header>
+  <p class="purpose">選択肢列の中で、意味は同じで表記が違う値のグループ（「取組予定」「取り組み予定」など）を返させる。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>L2-04</dd></div>
+    <div><dt>モード</dt><dd>standard / thorough</dd></div>
+    <div><dt>表データの表現</dt><dd>列のユニーク値一覧（出現順・重複なし）</dd></div>
+    <div><dt>共通前置き</dt><dd>あり</dd></div>
+    <div><dt>この例の出所</dt><dd>実解析: <code>rule_19_normalize_nominals.xlsx</code> / シート <code>NG-02</code>（ルール L2-04）</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre><span class="ctx">あなたは日本の行政データを分析するエキスパートです。
+対象データは以下のような行政機関のExcelファイルです:
+- こども家庭庁（保育所・福祉データ）
+- 厚生労働省（医療・介護・雇用データ）
+- 文部科学省（教育データ）
+- 総務省（地方財政・水道事業データ）
+
+行政データ特有の表現:
+- 秘匿値: 「-」「×」「…」「＊」「－」（個人情報保護上の非公開）
+- 単位省略: 「（百万円）」をヘッダーに記載し数値列は単位なし
+- 年度表記: 「令和5年度」「R5」「2023年度」が混在することがある
+- 地域コード: JIS X 0401/0402 準拠の都道府県・市区町村コード
+- 「0」始まりコード: 都道府県コード「01」等は文字列として保持すべき
+</span>
+<span class="dat">列「設問1」のユニーク値一覧:</span>
+<span class="dat">&#x27;取組予定&#x27;, &#x27;取り組み済み&#x27;, &#x27;未定&#x27;, &#x27;取組み予定&#x27;, &#x27;取組予定である&#x27;, &#x27;取り組み予定&#x27;, &#x27;取組済&#x27;, &#x27;取組予定（R8以降）&#x27;, &#x27;取組予定（令和8年6月）&#x27;, &#x27;取組済み&#x27;, &#x27;取り組み済&#x27;</span>
+
+これらの値の中で、意味は同じだが表記が異なるグループを見つけてください。
+
+例:
+- [&quot;男性&quot;, &quot;男&quot;, &quot;M&quot;, &quot;male&quot;] → 同じ意味
+- [&quot;有&quot;, &quot;あり&quot;, &quot;○&quot;, &quot;Yes&quot;, &quot;YES&quot;] → 同じ意味
+- [&quot;受けた&quot;, &quot;受診した&quot;, &quot;済&quot;] → 同じ意味
+- [&quot;要支援1&quot;, &quot;要支援１&quot;] → 全角半角の違いで同じ意味
+
+行政データの典型的な表記揺れ:
+- 「有」「あり」「○」「1」→ 同じ意味で使われることがある
+- 「受けた」「受診した」「済」→ 選択肢の表記が統一されていない
+- 「要支援1」「要支援１」→ 全角/半角の違い
+- 「男」「男性」「M」→ 性別の表記揺れ
+
+表記揺れがあるグループのみ返してください（単独の値は含めない）。
+確信がない場合は含めないでください。
+
+JSON回答（表記揺れグループ）:
+[[&quot;値1&quot;, &quot;値2&quot;], [&quot;値3&quot;, &quot;値4&quot;]]
+揺れなし: []</pre></div>
+  <details class="vars"><summary>全キャプチャのデータ部分（7 件、異なる内容は 7 通り）</summary><p class="hint">このメソッドの全プロンプトに共通する行（テンプレート）を除いた残りの行だけを、内容が同じものをまとめて並べたもの。テンプレート部分は上の全文と同じ。</p><ol class="varlist"><li><span class="src">rule_17_omit_column.xlsx / OK</span><pre>列「都道府県」のユニーク値一覧:
+&#x27;北海道&#x27;, &#x27;青森県&#x27;, &#x27;岩手県&#x27;, &#x27;宮城県&#x27;, &#x27;秋田県&#x27;, &#x27;山形県&#x27;, &#x27;福島県&#x27;, &#x27;茨城県&#x27;</pre></li><li><span class="src">rule_19_normalize_nominals.xlsx / OK</span><pre>列「設問1」のユニーク値一覧:
+&#x27;取組予定&#x27;, &#x27;取組済&#x27;, &#x27;未定&#x27;</pre></li><li><span class="src">rule_19_normalize_nominals.xlsx / NG-01</span><pre>列「設問1」のユニーク値一覧:
+&#x27;2. 取組予定（R8以降）&#x27;, &#x27;2. 取り組み予定&#x27;, &#x27;1. 取組済&#x27;, &#x27;2. 取組予定&#x27;, &#x27;3. 未定&#x27;, &#x27;1. 取組済み&#x27;, &#x27;1. 取り組み済み&#x27;, &#x27;1. 取り組み済&#x27;, &#x27;2. 取組み予定&#x27;, &#x27;2. 取組予定である&#x27;, &#x27;2. 取組予定（令和9年以後、対象を分けて実施）&#x27;</pre></li><li><span class="src">rule_19_normalize_nominals.xlsx / NG-02</span><pre>列「設問1」のユニーク値一覧:
+&#x27;取組予定&#x27;, &#x27;取り組み済み&#x27;, &#x27;未定&#x27;, &#x27;取組み予定&#x27;, &#x27;取組予定である&#x27;, &#x27;取り組み予定&#x27;, &#x27;取組済&#x27;, &#x27;取組予定（R8以降）&#x27;, &#x27;取組予定（令和8年6月）&#x27;, &#x27;取組済み&#x27;, &#x27;取り組み済&#x27;</pre></li><li><span class="src">rule_20_split_other.xlsx / OK</span><pre>列「設問1」のユニーク値一覧:
+&#x27;1. 取組済&#x27;, &#x27;4. その他&#x27;, &#x27;3. 未定&#x27;, &#x27;2. 取組予定&#x27;</pre></li><li><span class="src">rule_20_split_other.xlsx / NG-01</span><pre>列「設問1」のユニーク値一覧:
+&#x27;1. 取組済&#x27;, &#x27;4. その他: 対象となる事務を他団体に委託しているため&#x27;, &#x27;3. 未定&#x27;, &#x27;2. 取組予定&#x27;, &#x27;4. その他: 外部団体による実施&#x27;, &#x27;4. その他: 対象範囲の調査中のため&#x27;, &#x27;4. その他: R6.4.1時点で未定&#x27;, &#x27;4. その他: 取りまとめ中のため不明&#x27;, &#x27;4. その他: わからん&#x27;</pre></li><li><span class="src">rule_20_split_other.xlsx / NG-02</span><pre>列「設問1」のユニーク値一覧:
+&#x27;取組済&#x27;, &#x27;その他: 対象となる事務を他団体に委託しているため&#x27;, &#x27;未定&#x27;, &#x27;取組予定&#x27;, &#x27;その他: 外部団体による実施&#x27;, &#x27;その他: 対象範囲の調査中のため&#x27;, &#x27;その他: 取りまとめ中のため不明&#x27;, &#x27;その他: わからん&#x27;</pre></li></ol></details>
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>数値・日付・空と推定された列は対象外。非空 20 行以上かつユニーク値 20 種以下の列だけ（harunobu/rules/level2/L2_04_choice_standardization.py:23-24, 66-88）。</li><li>ユニーク値が 2 未満または 50 超なら送らない（harunobu/core/ai_semantic_checker.py:603-605）。L2-04 側の 20 種上限が先に効くので、実際には最大 20 値。</li><li>出現回数は送らない。値だけを <code>'v1', 'v2', …</code> でカンマ連結。ヘッダーは header_rows[0]（最上段）を使う（L2_04:117-122）。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>[[&quot;値1&quot;, &quot;値2&quot;], …] — 送った値に含まれない要素は捨て、2 個以上残ったグループだけ採用</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:634-645</span></p>
+</section>
+<section class="method" id="batch_check_other_detail_mixed">
+  <header class="mh">
+    <h3><code>batch_check_other_detail_mixed</code></h3>
+    <span class="pill real">実解析 1 件</span>
+  </header>
+  <p class="purpose">「その他_駐車場利用」のように「その他」と詳細が 1 セルに混在していないかをセルごとに判定させる。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>L2-05</dd></div>
+    <div><dt>モード</dt><dd>standard / thorough</dd></div>
+    <div><dt>表データの表現</dt><dd>「その他」を含むセル値を、列ヘッダー付きで 1 行ずつ</dd></div>
+    <div><dt>共通前置き</dt><dd>なし</dd></div>
+    <div><dt>この例の出所</dt><dd>実解析: <code>rule_20_split_other.xlsx</code> / シート <code>OK</code>（ルール L2-05）</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre>以下の複数のセル値について、「その他」と詳細情報の混在パターンか判定してください。
+
+  [0] 列「設問1」: 「4. その他」
+
+混在パターンの例: 「その他_駐車場利用」「その他（施設管理）」
+混在でない例: 「その他」（単独）、「その他の経費」（自然な列名）
+
+JSON回答（インデックス順の配列）:
+[{&quot;is_mixed&quot;: true/false, &quot;other_part&quot;: &quot;その他部分&quot;, &quot;detail_part&quot;: &quot;詳細部分&quot;, &quot;confidence&quot;: 0.0から1.0}]</pre></div>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>L2-04 と同じ列の絞り込み（非空 20 行以上・ユニーク 20 種以下・数値/日付列除外）のうえで、「その他」を含む値だけ。値ごとに 1 回（重複なし）。決定論で既に検出したセルは除く（harunobu/rules/level2/L2_05_other_detail_separation.py:20-21, 76-133）。</li><li>件数の上限はない（harunobu/core/ai_semantic_checker.py:351）。</li><li>共通の行政データ前置きは付かない。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>[{&quot;is_mixed&quot;: bool, &quot;other_part&quot;: str, &quot;detail_part&quot;: str, &quot;confidence&quot;: float}]（confidence ≥ 0.7 で違反、L2_05:139）</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:363-380</span></p>
+</section>
+<section class="method" id="batch_check_zero_unlikely_columns">
+  <header class="mh">
+    <h3><code>batch_check_zero_unlikely_columns</code></h3>
+    <span class="pill direct">直接呼び出し</span>
+  </header>
+  <p class="purpose">空白とゼロが混在する数値列について、ゼロが不自然な列（人口・面積など）かを判定させる。L1-09 は AI がないと判定しない。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>L1-09</dd></div>
+    <div><dt>モード</dt><dd>lite / standard / thorough</dd></div>
+    <div><dt>表データの表現</dt><dd>列ごとに「ヘッダー + 非空サンプル値 10 個」</dd></div>
+    <div><dt>共通前置き</dt><dd>あり</dd></div>
+    <div><dt>この例の出所</dt><dd>直接呼び出し（direct call）: rule_25_data_units.xlsx / OK-Implied 列「人口」「金額」「年齢」</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre><span class="ctx">あなたは日本の行政データを分析するエキスパートです。
+対象データは以下のような行政機関のExcelファイルです:
+- こども家庭庁（保育所・福祉データ）
+- 厚生労働省（医療・介護・雇用データ）
+- 文部科学省（教育データ）
+- 総務省（地方財政・水道事業データ）
+
+行政データ特有の表現:
+- 秘匿値: 「-」「×」「…」「＊」「－」（個人情報保護上の非公開）
+- 単位省略: 「（百万円）」をヘッダーに記載し数値列は単位なし
+- 年度表記: 「令和5年度」「R5」「2023年度」が混在することがある
+- 地域コード: JIS X 0401/0402 準拠の都道府県・市区町村コード
+- 「0」始まりコード: 都道府県コード「01」等は文字列として保持すべき
+</span>
+以下の各列について、値として「0（ゼロ）」が自然に発生しにくい列かどうかを判断してください。
+列には空白セルとゼロ値が混在しており、ゼロが不自然であれば空白が「データなし」の誤記である可能性があります。
+
+  [0] ヘッダー: 「人口」, サンプル値: 1500, 3200, 880, 12000
+  [1] ヘッダー: 「金額」, サンプル値: 250000, 510000, 90000, 1800000
+  [2] ヘッダー: 「年齢」, サンプル値: 25, 38, 47, 33
+
+ゼロが発生しにくい列の例（zero_unlikely=true）:
+- 「人口」「世帯数」「定員数」など — カウント系、集落・施設が存在する以上ゼロは非現実的
+- 「面積」「延床面積」など — 面積がゼロの施設・地域は原則存在しない
+- 「標準人員」「職員数」など — 存在する機関の職員がゼロは通常ない
+
+ゼロが正常に発生する列の例（zero_unlikely=false）:
+- 「変化率」「増減数」「前年比」など — ゼロ成長・ゼロ変化は正常値
+- 「補助金額」「交付金」など — 未交付（ゼロ）は通常の状態
+- 「不合格者数」「欠員数」「空き定員」など — ゼロは正常値
+- 「件数」「回数」など — 発生なしのゼロは正常
+
+JSON回答（インデックス順の配列）:
+[{&quot;zero_unlikely&quot;: true/false, &quot;reason&quot;: &quot;判断理由&quot;, &quot;confidence&quot;: 0.0から1.0}]</pre></div>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>対象は数値列で、空白が 1 つ以上かつゼロが 2 つ以上ある列だけ（harunobu/rules/level1/L1_09_blank_vs_zero.py:95-105）。今回のサンプルにはこの条件を満たす列がなかった。</li><li>サンプル値は本文から非空の値を最大 10 個（L1_09:59-60）、チェッカー側も [:10]（harunobu/core/ai_semantic_checker.py:99）。</li><li>AI 呼び出しが失敗すると None を返し、ルールは判定をスキップする（L1_09:117-125）。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>[{&quot;zero_unlikely&quot;: bool, &quot;reason&quot;: str, &quot;confidence&quot;: float}]</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:123-139</span></p>
+</section>
+<section class="method" id="batch_check_unit_in_cells">
+  <header class="mh">
+    <h3><code>batch_check_unit_in_cells</code></h3>
+    <span class="pill direct">直接呼び出し</span>
+  </header>
+  <p class="purpose">数値列の文字列セル（「約1,200名」「500千円」など）に単位が混在していないかをセルごとに判定させる。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>L2-01</dd></div>
+    <div><dt>モード</dt><dd>standard / thorough</dd></div>
+    <div><dt>表データの表現</dt><dd>対象セルの値を、列ヘッダー付きで 1 行ずつ</dd></div>
+    <div><dt>共通前置き</dt><dd>なし</dd></div>
+    <div><dt>この例の出所</dt><dd>直接呼び出し（direct call）: rule_16_number_column.xlsx / NG-02 列「費用」+ NG-03 列「売上」</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre>以下の複数のセル値について、数値と単位が混在していないか分析してください。
+
+  [0] 列「費用」: 「350000円」
+  [1] 列「費用」: 「350000円」
+  [2] 列「費用」: 「350000円」
+  [3] 列「売上」: 「¥400,000」
+  [4] 列「売上」: 「¥300,000」
+  [5] 列「売上」: 「¥300,000」
+
+行政データの単位混在パターン:
+- 「約1,200名」→ 数値=&quot;1200&quot;, 単位=&quot;名&quot;
+- 「500千円」→ 数値=&quot;500&quot;, 単位=&quot;千円&quot;
+- 「3.5%」→ 数値=&quot;3.5&quot;, 単位=&quot;%&quot;
+- 「1,234」→ 数値=&quot;1234&quot;, 単位=&quot;&quot;（純粋な数値）
+
+JSON回答（インデックス順の配列）:
+[{&quot;has_unit&quot;: true/false, &quot;numeric_part&quot;: &quot;数値部分&quot;, &quot;unit_part&quot;: &quot;単位部分&quot;, &quot;confidence&quot;: 0.0から1.0}]</pre></div>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>数値列の中で、数値型でなく、厳密な数値・純テキスト・%列の % 値のどれにも当たらず、決定論でも未検出の文字列セルだけ（harunobu/rules/level2/L2_01_numeric_purity.py:210-240）。今回のサンプルでは、該当セルはすべて決定論側で先に検出されていたため呼ばれなかった。</li><li>件数の上限はない。同じ値でもセルごとに 1 行ずつ並ぶ（harunobu/core/ai_semantic_checker.py:304）。</li><li>共通の行政データ前置きは付かない。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>[{&quot;has_unit&quot;: bool, &quot;numeric_part&quot;: str, &quot;unit_part&quot;: str, &quot;confidence&quot;: float}]（confidence ≥ 0.7 で違反、L2_01:245）</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:319-336</span></p>
+</section>
+<section class="method" id="analyze_sheet_visual">
+  <header class="mh">
+    <h3><code>analyze_sheet_visual</code></h3>
+    <span class="pill fail">実解析で 185 回呼ばれ全て送信前に失敗 → 直接呼び出し（回避パッチ）</span>
+  </header>
+  <p class="purpose">シートのスクリーンショットから、色による意味付け・結合セル・書式による意味付け・表外の注釈を読み取らせる。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>L1-05, L1-11（check_header_clarity / check_format_semantics 経由）</dd></div>
+    <div><dt>モード</dt><dd>lite / standard / thorough</dd></div>
+    <div><dt>表データの表現</dt><dd>LibreOffice で描画したシート画像（PNG）1 枚 + シート名入りの指示文</dd></div>
+    <div><dt>共通前置き</dt><dd>なし</dd></div>
+    <div><dt>この例の出所</dt><dd>直接呼び出し（direct call）: rule_11_format_based_semantics.xlsx / OK-01 analyze_sheet_visual（TypeError 回避パッチ適用）</dd></div>
+  </dl>
+  <div class="imgrow"><figure><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAxsAAARkCAYAAAAaDQlTAAAACXBIWXMAAAsWAAALFQEGDaotAAAgAElEQVR4nOzdeXwN1/8/8NdNRDZBCCELIURKEIlY0tjVro02xPZpYq1939UHH1XxLRpFo6UfakmRUJrWromt1FKEoqQoGoIQSZD1vn9/5Jf5ZNwkbtJcJF7Px2Mej3vPnDl3zsmcm3nPnTlHIyICIiIiIiKioqUxetV7QEREREREJRODDSIiIiIiMggGG0REREREZBAMNoiIiIiIyCAYbBARERERkUEw2CAiIiIiIoNgsEFERERERAbBYIOIiIiIiAyCwQYRERERERkEgw0iIiIiIjIIBhtERERERGQQDDaIiIiIiMggGGwQEREREZFBMNggIiIiIiKDYLBBREREREQGwWCDiIiIiIgMgsEGEREREREZBIMNIiIiIiIyCAYbRERERERkEAw2iIiIiIjIIBhsEBERERGRQTDYICIiIiIig2CwQUREREREBsFgg4iIiIiIDILBBhERERERGQSDDSIiIiIiMggGG0REREREZBAMNoiIiIiIyCAYbBARERERkUEw2CAiIiIiIoNgsEFERERERAbBYIOIiIiIiAyCwQYRERERERkEgw0iIiIiIjIIBhtERERERGQQDDaIiIiIiMggGGwQEREREZFBMNggIiIiIiKDYLBBREREREQGwWCDiIiIiIgMgsEGEREREREZBIMNIiIiIiIyCAYbRERERERkEAw2iIiIiIjIIBhsEBERERGRQTDYICIiIiIig2CwQUREREREBsFgg4iIiIiIDILBBhERERERGQSDDSIiIiIiMggGG0REREREZBAMNoiIiIiIyCAYbBARERERkUEw2CAiIiIiIoNgsEFERERERAbBYIOIiIiIiAyCwQYRERERERkEgw0iIiIiIjIIBhtERERERGQQDDaIiIiIiMggGGwQEREREZFBMNggIiIiIiKDYLBBREREREQGwWCDiIiIiIgMgsEGEREREREZBIMNIiIiIiIyCAYbRERERERkEAw2iIiIiIjIIBhsEBERERGRQTDYICIiIiIig2CwQUREREREBsFgg4iIiIiIDILBBhERERERGQSDDSIiIiIiMggGG0REREREZBAMNoiIiIiIyCAYbBARERERkUEw2CAiIiIiIoNgsEFERERERAbB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n6B///655s/IyMCYMWOUeViet2XLFnTp0gUODg4ICQnBJ598AhsbGzx58qTI6vUyJCQk4Ntvv0X58uXRtGnTPPN9/PHHePjwISZPnozly5fDwcEB/fr1U51kHDlyBCtWrEDr1q0REhKCkSNH4scff4S3tzeSk5OVfLt374a/vz9cXV2xadMmzJ07F5GRkejatSsyMjIMWt+idubMGezfvx9ubm6oUaNGrnn0bRd9ygL0O96LC33qou8xOmvWLCxYsABDhgzB5s2b4ejoiC5duuC3335T8ty9exdarRajRo3C6tWrMWzYMOzcuRMdOnTI98LD60jfdtGnjfv06YOwsDDVMnz4cABAhw4dVHlNTEx08nbu3LnoKkZEr59XOX95cbNlyxapVauWajExMZGqVauq0ry8vPItJygoSJydnaVcuXLStm1befvttyUuLi7XvPv375datWqJiMi4cePEzs5OGjdurLOUKVNGwsPDi7zOb4LMzEzltampqcyePVsnT0xMjCqfiMjMmTMFgNy8eVMn/5IlS8TDw0OGDx8u9vb2qnWJiYlSoUIFGTNmTNFU4BXSarXK6wULFkheXylXrlzRSfPx8RFnZ2flfWxsrCQmJqry7Nu3TwDI+vXrlbSAgABxcnJS/T02bdokACQ6OrrQdXkVctahY8eO0qpVK508+raLPmU9ny+v47240Kcu+hyjjx49ElNTU5k8ebKq7Dp16sh7772X7z5s375dAMjBgwcLUYNXR9++W9jj5f333xcnJydV2po1a8TU1LTgO0tExRl/2SiInj174urVq6qlevXqWLNmjSrtxIkTuW6v1WoxevRorFq1CpGRkbCyssLcuXPRrl07eHl54cyZMy/chxEjRuDkyZM6i7u7e1FX942hzwzszs7OOvnefvttANC59SkuLg5z585FcHBwrmVv374djx49wvTp0wEgz9vmioO8br14Xu3atXXSvL298eDBA+V91apVYWVlpcqT3cY586Wnp8PKykrVttbW1gAAKWZzlOpz7OnbLvqUVZB8xYE+ddHnGL106RJSU1PRsWNHVdnt27fHnj178v3FzM7ODkDWcVmc6Nt3C3O8JCYmYufOnejTp0+u60UEz549K3C5RFQ8lZz/OgbWvHlzODo66izXr19H//79c133/fffK9tHRETAw8MDkZGRiIqKgqOjIwAo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117bkG/zS2XnnXeOiNqHC6/tRHHfB+Crx78uJZo5c2Z069atcAWPWbNmxdKlS9f62G+//QrLVVRUREpprY/dd9897rnnnrU+tyY2DjjggKipqYnFixfH+PHjo6amJmpqaqJVq1Zx9913R01NTcycOTPmzp1beO6rfKJiTqeddlo8+uijMWrUqMI/rp/2yiuvRN++faNPnz5x4403fub65s6dG88999xX4q8aixcvjj59+kRExCOPPFL0wxrrV9OmTaNTp05Rr169uOKKK2K//faLdu3aRcTqH/4+eYO6iIgPPvggHnzwwdhzzz03xtv90rn77rujefPm0bNnz1rPtW7dOmbOnBmLFi0qTKupqYlp06Z9JX5hsC6HHXZYREQ8/vjjhWk1NTXx3HPPFYI3wvcB+KryK4USzJgxI7p16xZ9+/aNoUOHRuPGjaNBgwa1rvyyxvr8DWFFRUU0atQozjjjjBg+fHhMmjQp2rRpE+Xl5dGwYcNo3LhxDBkyJB555JEYPnx4dO3adb299lfF3LlzCyfWrlq1KqZOnRojRoyIBg0aRN++fSNi9cn+t9xyS5x00knx5ptvFp0306NHj9hmm23i/fffjz59+kR5eXkcccQRcd999xXmadq0aa0fXoYNGxYVFRUxYMCADTDKfB555JFYsmRJ4Q7Ua7bNHnvsUTin6dhjj40pU6bEVVddFU899VTR8v379y+cUzBp0qT429/+VjgH6amnnooFCxbE9ttvH926dYuIiA8//DAeffTRiFh9WOOyZcsKr3nIIYes87LRX0aljqWU7TJ69OgYPXp0dOrUKRYuXBjDhg2L2bNnx/jx4wuvN2/evNh3333jO9/5Tuywww6xYMGCuOWWW2L+/Plx7733bsihrxel7LsRpX1GIyKWLl0a999/f5xwwgm1brAaEXHyySfHzTffHH369Imzzz47IiJuvPHGWLhwYZxyyinZxplLKdullG288847x3HHHRfnnntuLFq0KFq0aBE33HBDLF26NH784x8XXq/U7wPAZmaD39pjE7Ry5cr0u9/9LqWU0ooVK1JEpNdff32d8x9wwAHp5ptv/tz1lnJTv5qamjRgwIC07bbbpldeeaUwvU2bNumBBx4ofH355ZenBg0apDvuuONzX5dit95661pvzNi8efPCPMccc8w6b+D40EMPpZRSmjZt2jrn6dy5c63X3XXXXTeLm6u1bNlyrWO+6aabCvM0b958ndtm8eLFhfmOO+64tc5zzDHHFOaZOXPmOtc1bdq0DTr2f1WpYyllu0ycODF17do1NW7cOFVVVaW+ffuml19+uej1Fi9enL7zne+k1q1bp3r16qUmTZqkgw8+OP35z3/eYGNen0rZd1Mq7TOaUkojRoxIEZEmTJiwztccO3Zs2n///VN1dXWqrq5O++67b3ryySezjC+3UrZLqdt4yZIl6ZxzzklbbbVVql+/furevXsaP3580Tylfh8ANitRltImdieijWzlypUlHWN68803x/e///2iaSmlePvtt6O8vDxWrlwZ++67bwwZMiT69eu3ztfae++9Y8WKFTFy5MjCpRYjInbYYYe47rrr4vDDDy9MGzZsWAwaNCiGDRvm6h4AAGxsZQ6j+iesuVnRuq7wcv7558c222xTa3pZWVn07ds3pkyZEg0bNox/+7d/q3VX30+qqKiIoUOHRocOHWpdRrd9+/a1DhcZOHBgdOjQoegYWQAA2Fj8ZQMAAMihzNWoAACALMQGAACQhdgAAACyEBsAAEAWYuNfMHXq1Pj2t78dK1eu/Nx5R40aFT/5yU/W+XzPnj3jV7/6VQwcODA++uij9fk2AQBgoxAbJVqxYkV8/PHHRY/mzZvH2LFjY8SIEbWe+/jjj4uWf/fdd2P27NnrXH/dunWjdevWUVZWFoMGDVrrPOedd140b948OnXqVOvRuHHj+NOf/rQ+h/yVsGLFirjhhhviwAMPjGbNmkWzZs2id+/eMWnSpKL5ZsyYEf37949WrVpFgwYNYvvtt48TTjgh/vGPf9Ra5/333x+dOnWKBg0axNe//vVad2aeMmVKnHrqqdG+ffto1KhRdOjQIX75y1/G0qVLs441h1LHMnLkyDjyyCNj++23j6qqqujcuXMMGzas1vrmz58f//7v/x7V1dVRWVkZ3/rWt2LOnDn/1Lo2BaWM5e23346LL7449thjj6iqqortt98+Bg0aFG+++Wat9f3xj3+Mzp07R2VlZbRs2TKOP/74eP3112vN93mf0U1BqfvuF9nfPvjggzjnnHOiRYsW0bBhw9h5553jlltuqTXf6NGjo3v37tGoUaNo1qxZfPOb34x3330321hzKGW7lLqN586dG2VlZbUen77f0+a07wJfwEa9p+Am5Kc//ek673y6rseCBQsKy992223pqKOOSimtvgt5TU1N0aN3797p9ttvT2+88Ubaf//908KFC1NKKc2fPz/9n//zf1JKKZ177rnpsssuW+v769GjRxoxYkTmrbD5mT9/fqpbt24aOHBg+u///u900003pV133TXVq1cvPf/884X5nnrqqfTtb387XX311enOO+9Ml112WWrWrFnq2LFj+uijjwrzjRs3LpWXl6eTTjopPfLII+nUU09NZWVl6bHHHivMc8YZZ6T27dunyy67LN15553p7LPPTnXq1ElHHnnkBh37+lDqWHbdddd0wAEHpOuvvz7ddttt6dvf/naKiHTDDTcUzbfPPvukrbfeOt16663pnnvuSbvssktq06ZN0d2FS13XpqCUsQwfPjxVV1en8847L915553pyiuvTFtuuWVq3bp10XZ59NFHU0SkgQMHpoceeijdeuutqUWLFmm33XZLy5cvL8xXymd0U1DqvlvqZ/Sjjz5Ke+65Z2rRokW66qqr0p133pl++ctf1vqee++996aysrJ09NFHp9tuuy3ddNNN6fjjj09/+9vfNsi415dStkup23jOnDkpItIVV1yRhg8fXnh8+k7sm9O+C5RMbJTqpz/9aTr33HNLmvf999//zNh44oknPjdUfvrTnxbmbdeuXUppdWy0aNEi7bnnnrUelZWVYuOfsHTp0lo/JCxYsCA1adIknXzyyZ+57AMPPJAiIj311FOFaT179kxdunQpmq9Hjx5pn332KXw9a9astHLlyqJ5LrroohQR6e9///s/O5SNotSxzJgxo9ayPXr0SG3bti18veaH5Ycffrgwbe7cualOnTrp17/+9Rda16ailLG8+eabadGiRUXzPP744yki0p133lmYdsIJJ6Q2bdoU/f+45557UkSkl156qTCtlM/opqDUfbfUz+jll1+eqqqq0ty5c9f5mosWLUpNmzZNZ5999noaxcZTynYpdRuviY1Px8WnbU77LlAyh1F9Uf/4xz9iq622WufjrLPOqrXMdtttF2eeeWY8+OCDsdVWW8Wbb74Ze+21V6SUCo/jjz8+hg4dWvj6yiuvXOvrn3766TFp0qRaj9133z330DdL9evXj1atWhVN23LLLaNjx46xYMGCz1y2RYsWERGxfPnyiIhYsmRJPP3003H00UcXzTdgwICYMGFCfPDBBxER0bZt2ygvL9711txJflM7FKPUsey00061lu3evXvRNp48eXKUl5fHwQcfXJjWunXr6NChQzz88MNfaF2bilLGsu2220ZVVVXRPGu28SfnW758eVRVVRX9/6iuro6IiPT/791a6md0U1DqvlvqZ/R3v/tdHH/88dG6detYtWrVWl/zgQceiIULF8YFF1wQEbHO+TYFpWyXf+b742edc7g57btA6cRGiS666KK45JJLYtWqVbFixYqYP39+rceZZ54ZNTU10aRJk3j77bejadOmERHx7LPPxi9+8Ys46KCD4vnnn4+tt9661vqbNm0a77//fkREjB8/Pj788MO1vo/f/va30aVLl1qPKVOm5Bv8V8zixYtj2rRpseuuu9Z6bunSpbFo0aJ46aWX4ic/+Unstttusd9++0VExKxZs2LFihWx8847Fy3TsWPHWLVqVcyYMWOdrzlx4sSoW7dutG/ffv0OZiModSwTJ04s2sZLly6NioqKqFOnTtF8DRo0iGnTpn2hdW3KShnLxIkTIyKK5jvxxBNj6tSpccMNN8S7774bU6dOjZ///Oex3377RadOnSLiX/uMbgo+a9/9pE9/RufPnx+zZ8+ONm3axGGHHRb169ePJk2axEknnRSLFy8uLPfcc8/FjjvuGA899FC0bNky6tSpE7vuumtRDG/KStl3P2sbH3LIIdGoUaPYYost4pRTTolFixaV9Jqby74LrF2dz5+FiIjKysqIiHjvvfc+d96ysrJo3rx54etWrVpFs2bNonHjxtG6deuYNWtWTJw4MaqqqmLFihVx1FFHRdu2bWPhwoUxb9686NWrV7zxxhvRuHHjWus+/fTT46KLLqo1fd999/0XRscnXXDBBbFq1ar43ve+V+u5fv36xWOPPRYRq3/QGz16dNStWzciIhYuXBgREV/72teKllnz2+U1z3/anDlz4j//8z/jlFNOiUaNGq23cWwMpY7lT3/6U4wbNy6GDx9emLbTTjvF8uXL48UXXyz8pW7x4sXx6quvfuYV39a2rk1VKWNZtmxZ/OAHP4jddtstDjzwwML0Xr16xbBhw+KEE06Is88+OyJW/6Z65MiRUVZWFhH//Gd0U/FZ++4aa/uMvv322xERcemll8ahhx4ao0aNildffTUuvPDCWLZsWdx1112F+d5555244IIL4qqrroqWLVvG9ddfH/369Yu//vWv0bFjx/yDzKTUfXdt27hevXoxePDg6NWrVzRu3DieeeaZuO6662LGjBkxduzYwufv0zanfRf4DBvzIK5N0dy5c1NZWVlq1qxZrUejRo3SoEGD1rrcJ8/ZGDNmTNprr71SSqtPNjzxxBPTb37zmzRo0KB0/fXXp169ehWW+/Q5G9tss03afffdaz0aN27snI314H/+539SWVlZuv3229f6/Msvv5zGjRuX/vu//zvttNNOaZdddikcTz9u3LgUEenPf/5z0TITJ05MEZHGjBlTa30ffPBB2m233dJuu+2Wampq1v+ANqBSx/Liiy+mJk2apJNOOqloek1NTdp2221Tt27d0vTp09Mbb7yRjj322FReXp4qKyu/0Lo2RaWOZdCgQalJkybp5ZdfLpr+9NNPp8rKynTqqaemMWPGpLvuuiu1bds27bfffoUTxP+Zz+im4vP23ZTW/RmdMmVKiojUvn37ovMYfvWrX6WysrLCOQz9+vVLEZHuuuuuwjwffvhh2mqrrdLgwYMzjGrDKHXfLWUbr3HTTTeliEhjx45d6/Ob074LfCax8a8YP358qlOnTnr33Xc/d95Pxsa9996bDjjggJRSSnfddVcaPHhweuihhwonbg4dOrSw3Cdjg7xGjRqV6tSpky699NKS5l8Tntdff31KafU/nhGRHnrooaL5xowZkyIiTZw4sWj60qVL04EHHphatWqVXn/99fUziI2k1LHMmTMntWjRIh1yyCFFV0ha4+mnn06tW7cuXCihR48e6YgjjljrCaSft65NSaljueCCC1K9evXSE088Ueu5Ll26pIMPPrho2gsvvJAiIt17770ppS/+Gd1UlLLvftZn9O9//3uKiFrB8PzzzxdF2EknnZQiotbyffv2Td27d19Po9mwSt13v+j3xwULFqSISEOGDKn13Oa07wKfyzkb/4onnngievbsWTg3oxTLli2LN954o3DC50cffRQNGzaMDh06xKRJk+L111+P7373u0XLzJo1a63XMF/X4w9/+MN6HedXwbPPPhsDBgyIwYMHx89+9rOSlmndunU0bdq0cP+Udu3aRZ06dWqdXzBt2rQoLy8vOg561apVMXDgwJgyZUqMHj06WrZsuf4Gs4GVOpb58+dH7969o0WLFjFixIha52ZErD4ccPbs2TFt2rR47bXX4plnnom5c+fGXnvt9YXXtakodSzXXXddXHXVVXHbbbfFQQcdVOv56dOn17pQxG677RZlZWXx2muvRcQX+4xuKkrZdz/vM7rddttFVVVV4UT6Ty4XEYUTqdec67K2+T59svWmoNR995/5/rhixYqIiFrbZXPad4ESbezc2ZSs+S3X5z3atGlTa9lrr702tWjRIjVr1iz17NkznXXWWSml1ZdbvPjii9Py5ctTRUVFuv7669PKlSvTihUrUkr/e0+OxYsXp/Hjxxfuy9GqVat09913p5qamjRz5sw0d+7cwnN+U/TFvPzyy6m6ujodccQRtS4Fucaa/x+ftObzcN111xWm9ezZM3Xu3DmtWrWqMK179+61Lit6yimnpIYNG6bx48evp1FsPKWMZdGiRWmPPfZIO+20U5o3b17J6x45cmSKiMK9Zv6VdX0ZlTqWu+66K5WVlRVdAvjTdt1113TggQcWTZswYUKKiDRs2LDCtFI/o5uCUvbdlEr7jB5zzDFpxx13LPr+ecUVV6SKior01ltvpZRSmjp1aoqI9Pvf/74wz+LFi1PTpk3TGWecsR5GtGGVsl1K2cZr+zfnmmuuSRGRnnnmmcK0zWnfBUrmBPEvqlmzZjF//vx1Pv/YY4/FqaeeWvh6yZIl0aVLl5gxY0Z85zvfiTPPPDOuvPLK2GGHHWLHHXeMmpqaGDFiRNx8882xcuXKaN++fbz77rtx1llnxT333BMVFRXRqFGjOOOMM2L48OExadKkaNOmTZSXl0fDhg2jcePGMWTIkHjkkUdi+PDh0bVr1w2xGTYb77//fvTp0yfKy8vjiCOOiPvuu6/wXNOmTaNnz54REXHOOefE+++/H126dIkmTZrE9OnT49Zbb41WrVrFCSecUFjmP/7jP6Jnz54xaNCgOProo2PkyJExYcKEGD16dGGea6+9Nm655ZY46aST4s0334wRI0YUnuvRo0dss802G2Dk60epYzn22GNjypQpcdVVV8VTTz1VtI7+/ftHRUVFRER8//vfj/bt20d1dXVMnjw5hg4dGieffHLRidClrmtTUMpYJkyYECeeeGJ07do1tttuu6Jt3KFDh8KVpk499dQ488wz44QTToj+/fvHO++8E5dffnm0atUq+vbtW1imlM/opqDUfbfUz+hFF10UXbt2jf79+8eJJ54Yr776alxyySVx2mmnFebZeeed47jjjotzzz03Fi1aFC1atIgbbrghli5dGj/+8Y834Oj/daVsl1K38Q9+8IOYP39+dOvWLSorK2P8+PFxxx13RJ8+faJHjx6FZTanfRf4AjZ27mxKnn/++dSsWbPPnGf06NG1/rJx8cUXp9mzZ6eUVh8fW1VVlWbOnFl4ftKkSamysjIdfvjh6Qc/+EF69dVX0+GHH55SWn3S7IABA9K2226bXnnllcIybdq0SQ888EDh68svvzw1aNAg3XHHHf/yOL9Kpk2bts6/UHXu3Lkw3wMPPJAOPPDAtOWWW6YGDRqk9u3bp7PPPju98847tdZ53333pV122SXVq1cvdezYMd19991Fzx9zzDHrfM1PH0v/ZVfqWJo3b77O+T55F+yzzz47tWjRItWrVy+1a9cuXXPNNbX+qlTqujYFpYxlzYm2a3ucf/75hXWtWrUq3XzzzWm33XZLjRs3Tttuu2066qij0qxZs2q97ud9RjcFpe67X2R/GzduXOratWuqX79+2mabbdIPf/jD9PHHHxfNs2TJknTOOeekrbbaKtWvXz917959k/wLZSnbpdRtfM8996S99torVVdXp7p166Ydd9wxXXTRRemjjz4qes3Nad8FShZlKX3q4FPW6YUXXog999zzM48xXbVqVbRq1SrmzJmz1udvvPHG+P3vfx8vvPBCRKy+kVmvXr3ivPPOi759+0bv3r3j4osvjr/97W9x9dVXx9577x0rVqyIkSNHxvbbb19Yzw477BDXXXddHH744YVpw4YNi0GDBsWwYcPiqKOOWk+jBgCAf0qZw6i+gKqqqjjiiCPiT3/60zrnmTJlStxyyy3rfP6xxx6La665pvD1f/7nfxbunVFWVhYDBw6MX/ziFzFmzJioqKiIoUOHRocOHWpd97x9+/a17io8cODA6NChQ3zjG9/4J0cIAADrj79sbGArVqwo+stISmmdNzwCAIBNWJnYAAAAcijb9C4MDgAAbBLEBgAAkIXYAAAAshAb/4TJkyfHBRdcEP/4xz+Kpnfu3Dk++OCDjfSuAADgy0VslGjo0KFx7LHHRuvWrWPvvfeO6dOnx9y5cwvPp5TiL3/5y1qXffjhh6OsrKzkx84777zW9Zx33nnRvHnz6NSpU61H48aNP/OSvPzrJk+eHD179oyGDRvG1ltvHWeddVYsWbKk1nwffPBBnHPOOdGiRYto2LBh7LzzzrUuh/z+++/HoEGD4mtf+1psscUWcdxxx8W77767oYayUdx7772xyy67RP369aNt27bxm9/85jPn/9nPfhZlZWVx/PHHF02fOnVqDB48OHbdddcoLy+PAw44IOO7/nKYP39+/Pu//3tUV1dHZWVlfOtb36p1L5+RI0fGkUceGdtvv31UVVVF586dY9iwYUXzrFixIk488cTo2LFjNG7cOJo1axa9e/eOCRMmbMjhbHCl7rv3339/dOrUKRo0aBBf//rX49577y16fu7cuWv9nr0539do+fLlcdlll8VOO+0UjRo1irZt28bFF18cS5cuLZrvL3/5S/Tp0ye23HLLaNq0aRx00EFr/Vz98Y9/jM6dO0dlZWW0bNkyjj/++Hj99dc31HCAjcB9Nkq0ZMmS2GeffWLLLbeMN954I+6///6i51euXBkRERUVFWtd/utf/3qMGTOmaFqnTp3i9ttvjz322KOxuhfOAAAgAElEQVQwbfTo0XHttdcWvl6wYEH89a9/jQMPPDAiIs4+++y46KKLaq1/3333/ecGRknmzZsXPXv2jJ122inuvPPOmDdvXlx00UXx1ltvxYgRIwrzLV26NHr16hVvvvlmnHPOOdGyZcuYPXt2zJ8/v2h9Rx11VEydOjX+67/+KyoqKuInP/lJ9OvXL5555pkNPbQNYsyYMfGd73wnjjvuuLjyyivj2WefjXPPPTfKy8vjzDPPrDX/7Nmz4ze/+U00bdq01nOTJ0+OJ554Ivbaa6/46KOPNsTb3+j69+8fM2fOjF/96ldRVVUVl156afTs2TP++te/RmVlZUSsjrNmzZrFj370o9hiiy3ivvvui+OOOy7ee++9wjZeuXJlzJo1K4455pho27ZtLF68OIYOHRq9evWK559/fp2/6NiUlbrvPvXUU3HUUUfFoEGD4pprrokHH3wwjj322Kiuro7evXsXrfOKK66InXbaqfD1dtttt8HGs6FdfPHFce2118bFF18cXbt2jRdeeCEuueSSeO+99+LGG2+MiIi33norevXqFTvuuGPcfPPNUV5eHtdee2307t07Xnzxxdhxxx0jYvW/b8ccc0wMHDgwfvnLX8bbb78dP//5z+Owww6LF1544TNvmAtswjbe3cs3Tf/1X/+V+vXrV/h62bJladmyZemjjz5KEZE++uijlFJKNTU1hXlGjRqVdt9991rratasWXruueeKpj3wwAOpY8eOha+feOKJ1K5du5RSSueee25q0aJF2nPPPWs9Kisr04gRI9brWPlfP/nJT1KjRo3SvHnzCtP+8Ic/pIhIkydPLky7/PLLU1VVVZo7d+461/X000+niEijRo0qTHv88cdTRKTHH388zwA2sm7duqUuXboUTfve976XmjVrlpYvX15r/m9/+9vp3HPPTbvssks67rjjip5buXJl4b8POeSQtP/++2d5z18Wjz76aIqI9PDDDxemzZ07N9WpUyf9+te/LkybMWNGrWV79OiR2rZt+5nrX7BgQaqoqEi//OUv19+b/hIpdd/t2bNnrc9ojx490j777FP4es6cOSki0oQJE/K/8S+J1q1bp+9+97tF00499dTUtGnTwtf/8z//kyIizZ49uzDtrbfeShGRfvOb3xSmnXDCCalNmzZF+/A999yTIiK99NJLGUcBbEQOoyrVhx9+GB9++GF8/PHHsWLFisLXjzzySPTv3z+WL18ederUiQYNGsTHH38c2223Xbzyyivr/X2cfvrpMWnSpFqP3Xfffb2/Fv9r8uTJsccee8RWW21VmLbmt50PP/xwYdrvfve7OP7446N169axatWqta7r0UcfjaqqqvjmN79ZmHbQQQfFlltuGY8++mimEWw8KaV48cUX45BDDima3rt371iwYEH83//7f4umP/bYY/Hss8/Gz3/+87Wur7z8q/Vta/LkyVFeXh4HH3xwYVrr1q2jQ4cORZ+9T/6mfY3u3bvHggULPnP9TZs2jYYNG8by5cvX35v+Eill312yZEk8/fTTcfTRRxctO2DAgJgwYcJaz8X7qvxVbfny5bHFFlsUTauuro70iVt0rfnsfHK+LbbYIsrLy2vNV1VVVbQPV1dXR0QUzQdsXr5a/2r/k1auXBmVlZVRWVkZ559/fowaNSoqKyujTZs28corr0SHDh1i3rx5UVVVFRGrDxlp2bJl7LLLLuv9vfz2t7+NLl261HpMmTJlvb8W/2vp0qVRv379omkNGjSIiIhp06ZFxOrj6mfPnh1t2rSJww47LOrXrx9NmjSJk046KRYvXlxYbvr06dG+ffuif3DLysqiQ4cOMX369A0wmg1rxYoVsXz58s/dfhGrfxg555xz4pJLLomvfe1rG/R9flktXbo0Kioqah1i0qBBg6JttzYTJ06MXXfdtdb05cuXR01NTcydOzfOOeecKC8vj+9+97vr9X1/WZSy786aNStWrFhR6zCyjh07xqpVq2LGjBlF0w855JBo1KhRbLHFFnHKKafEokWLMo5g4xo8eHDceeed8fjjj8f7778fY8eOjVtvvbXo8Md+/frFlltuGeedd168/vrrhcNIt9xyyzjmmGMK85144okxderUuOGGG+Ldd9+NqVOnxs9//vPYb7/9olOnThtjeMAG4ADJElRUVERKKVJKscsuu0R5eXm88MILUb9+/ejZs2cMHjw4Xn/99cJvsm+//fY45ZRTitaxbNmyeOONN4qmrVy5MubNm1c0/fN+C3n66ac7Z2Mj2GmnneKhhx6KZcuWRb169SIiYtKkSRER8d5770VExNtvvx0REZdeemkceuihMWrUqHj11VfjwgsvjGXLlsVdd90VERELFy5c6w/S1dXVhXVtTurWrRtt2rSJ559/vmj6p7dfRMSvf/3rqFevXq3956tsp512iuXLl8eLL75Y+Avm4sWL49VXXy2cK7Y2f/rTn2LcuHExfPjwWs8NGTIkLrjggohY/bl78MEH1/qXkc1BKfvuwoULIyJq7Zdrfuu+5vl69erF4MGDo1evXtG4ceN45pln4rrrrosZM2bE2LFjo6ysbIOMaUP6xS9+ETU1NUXnrZxxxhlxySWXFL7eaqutYty4cXHooYfG9ttvHxERLVq0iMcffzyaN29emK9Xr14xbNiwOOGEE+Lss8+OiIh99tknRo4cuVluO+D/25gHcW1qRo8enSIiNWjQIJ122mlp+vTpqbq6Oi1ZsqRwDPC4ceNSs2bN0uLFiwvLjRo1KkVEyY/POmdjm222SbvvvnutR+PGjZ2zkdHzzz+fysrK0ve+97301ltvpZdeeil16tQplZeXp759+6aUUpoyZUqKiNS+ffuiY5J/9atfpbKysvT3v/89pZTSAQcckHr16lXrNQ499NDUvXv3DTOgDWzIkCGpvLw83Xzzzem9995LDz/8cGratGmKiHTttdemlFJ68803U1VVVXriiScKy63tnI1P+iqcs1FTU5O23Xbb1K1btzR9+vT0xhtvpGOPPTaVl5enysrKtS7z4osvpiZNmqSTTjpprc//4x//SM8880waPnx46tWrV9piiy3SX/7yl5zD2GhK2XfHjRuXIiL9+c9/Llp24sSJKSLSmDFj1rn+m266KUVEGjt2bM5hbDRDhgxJjRo1SldffXV68skn05AhQ1JlZWW68MILC/O8/fbbqX379mn//fdPDz74YHrooYdSr169UosWLdKcOXMK8z399NOpsrIynXrqqWnMmDHprrvuSm3btk377bffWs/dAjYLYuOL6NOnT+rTp0/61re+lXbfffc0cuTIwkltl112WYqIdNddd6WpU6cWLbe+ThBn47rxxhtTZWVliohUXl6eTjnllNSuXbt08sknp5RS+vvf/54iIg0ePLhoueeff77oB5b+/funzp0711p/9+7d06GHHpp/IBvBsmXL0uDBg1N5eXmKiNSoUaN06aWXpohId955Z0oppZNOOin17t07LVy4sPDYeeed04ABA9LChQvTihUraq33qxAbKa3+Ia1169aFX0j06NEjHXHEEWs9+XvOnDmpRYsW6ZBDDinpB7hly5alDh06pP79++d4618Kn7fvvvjiiyki0kMPPVS03JgxY1JEpIkTJ65z3QsWLEgRkYYMGZJ1DBvDe++9l+rXr58uv/zyoulDhgxJFRUV6c0330wppfSjH/0oVVdXF/2SbcmSJWnrrbdOp512WmFaly5d0sEHH1y0rhdeeCFFRLr33nszjgTYiJyzUaonn3wyXn/99Tj00EOjoqIibrjhhujSpUvhONOxY8fGXnvtFaNHj17vl4+cNWvWF7pPxx/+8If1+vqsdvrpp8e8efPipZdeirfeeiuuuuqqmDNnTuy1114Rsfryl1VVVbVOdFxzeN2aczQ6duwYM2bMKDqBPKUUr776anTs2HEDjWbDqlu3btx6660xf/78eOmll+Kdd96Jb3zjGxERhe336quvxpgxY6K6urrwmDZtWvzxj3+M6urqmDx58sYcwka17777xuzZs2PatGnx2muvxTPPPBNz584tbLs15s+fH717944WLVrEiBEjSrqUaN26dWPXXXeN2bNn53r7G93n7bvt2rWLOnXq1DoHZtq0aVFeXh7t27df57pXrFgREZvnhQvmzJkTH3/8ca0LkOy+++6xcuXKwr2mpk+fHu3atStchjkiomHDhtGhQ4d47bXXCtOmT59ea1277bZblJWVFc0HbF42v++OGSxcuDAGDx4cl1xySeEflB49esS2224bEauvMT5+/Pi46aab4oEHHoiampr19toHHHBA1NTUxOLFi2P8+PFRU1MTNTU10apVq7j77rujpqYmZs6cGXPnzi0898kT8li/GjZsGJ06dYqtt946Lr300qisrCzc0KusrCwOPfTQGDt2bOEHkIiIJ554IioqKgoXDPjmN78ZixcvLrqS0OOPPx7vvvtu0RWqNkdNmzaNTp06Rb169eKKK66I/fbbL9q1axcRETfccEOMHTu26NGmTZvo1atXjB07Njp06LCR3/3GVV5eHh07dowdd9wxHnzwwfjLX/4SJ598cuH5xYsXR58+fSIi4pFHHin6wW+NtZ3jsWjRonjuuedihx12yPfmvwQ+a99t1KhR7LfffnHvvfcW/bLg3nvvjb333rtwlaVP7tdr3HHHHRERseeee26AUWxYrVu3joiodb7VxIkTIyKiTZs2hflmzpxZdKJ8TU1NTJs2rTDPmvk+va7nn38+UkpF8wGbFyeIl2DhwoXRrVu36N+/f+EmRp909dVXx+GHHx677757HHTQQXH11VfHpZdeul5eu6KiIho1ahRnnHFGDB8+PCZNmhRt2rSJ8vLyaNiwYTRu3DiGDBkSjzzySAwfPjy6du26Xl6XYu+880788Ic/jO7du0fE6iuOPfDAA3HHHXcUnVR60UUXRdeuXaN///5x4oknxquvvhqXXHJJnHbaabHNNttExOrfUh900EFxyimnxJVXXhkVFRVx4YUXRo8ePaJXr14bZXy5jR49OkaPHh2dOnWKhQsXxrBhw2L27Nkxfvz4wjz/9m//Vmu5xo0bR/PmzYvuEv7hhx8WLhH8zjvvxLJlywo3ZzvkkEMKV4XbnHz/+9+P9u3bF/7CM3To0Dj55JMLN/uMiDj22GNjypQpcdVVV8VTTz1VtHz//v2joqIi7rnnnvj9738fvXv3jm222SbeeuutuO2222L+/Pnx4x//eEMPa4Modd/9j//4j+jZs2cMGjQojj766Bg5cmRMmDAhRo8eXZjnBz/4QcyfPz+6desWlZWVMX78+LjjjjuiT58+0aNHjw0+tty23HLLOOqoo+LKK6+MVatWRefOnWPy5Mlx1VVXRb9+/Qq/cDv55JPj5ptvjj59+hRO/L7xxhtj4cKFRRd7OPXUU+PMM8+ME044Ifr37x/vvPNOXH755dGqVavo27fvRhkjsAFs3MO4Nh1rjn3+9E39Ro8enRo3blw4T2PKlCmpUaNGadKkSYV5Ro0alb7+9a+nuXPnFj2qq6vT/fffXzTtlltuKTpno6amJg0YMCBtu+226ZVXXilMb9OmTXrggQcKX19++eWpQYMG6Y477si2Db7K3n///dSnT59UXV2dGjRokLp06ZJGjhy51nnHjRuXunbtmurXr5+22Wab9MMf/jB9/PHHRfO899576bvf/W5q0qRJqqqqSscee2yaP3/+hhjKRjFx4sTUtWvX1Lhx41RVVZX69u2bXn755c9dbm0niM+cOXOdF1eYNm1ariFsVGeffXZq0aJFqlevXmrXrl265pprap3D0rx583VulzXH0r/88svpyCOPTC1btkz16tVLrVq1SkceeWR68cUXN8awNogvsu/ed999aZdddkn16tVLHTt2THfffXfR8/fcc0/aa6+9UnV1dapbt27acccd00UXXVS4mevmaNGiRelHP/pRatu2bWrQoEHacccd0/nnn58++OCDovnGjh2b9t9//1RdXZ2qq6vTvvvum5588smieVatWpVuvvnmtNtuu6XGjRunbbfdNh111FFp1qxZG3JIwIYVZSm5k84XceONN8YTTzwR999/f9x9993x/e9/P2666aY47rjjCvPccMMNceGFF8add94Z/fr1i4cffvgL/damY8eOMW3atFi5cmXsvffesWLFihg5cmThkoIRETvssENcd911cfjhhxemDRs2LAYNGhTDhg0rHB4AAAAbSZnDqL6gqqqq2HrrrSMiYsKECXH33XfHYYcdVjTPWWedFZWVlfHxxx9HxOpDQfr16xf333//567/ySefjCFDhkTE6kOohg4dGh06dIhGjRoVzde+fftah4sMHDgwOnToUDjxFgAANiZ/2QAAAHIoczUqAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EB/L/266AEABgGYGAH86+5KsJg3CnINwAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsALrNsSEAAAYjSURBVAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAAiTsz53UEAADwnwVJ10hUpsRXhgAAAABJRU5ErkJggg==" alt="送信された PNG（rule_11 の先頭シート OK-01 を LibreOffice で描画したもの）" loading="lazy"><figcaption>送られた画像そのもの（PNG 34,465 バイト）</figcaption></figure><div class="imgmeta"><p>メッセージの構成: 画像 1 個 → テキスト 1 個の順。</p><p>画像パート: <code>data:image/png;base64,…</code>（base64 45,956 文字）</p></div></div>
+  <details class="long"><summary>プロンプト全文を開く（1,013 文字）</summary><div class="pre-wrap"><pre>以下はExcelファイルの「OK-01」シートのスクリーンショットです。
+見た目から以下を詳細に分析してください。
+
+行政データの機械可読性チェック観点:
+
+1. **色による意味付け**: 背景色やフォント色で情報を伝えているセルを特定してください。
+   例: 赤字で「マイナス」、グレー背景で「該当なし」、黄色で「要注意」等
+
+2. **結合セル**: ヘッダーやデータ領域で結合されているセルを特定してください。
+
+3. **書式ベース意味付け**: 太字・斜体・取り消し線等で意味を持たせている箇所
+
+4. **表外の注釈**: 表の外に配置されたメモ、脚注、注意書き
+
+5. **装飾要素**: ロゴ、画像、罫線アート、空白セルでの余白作り
+
+6. **レイアウト問題**: 表の開始位置が不自然（A1以外から始まる等）
+
+JSON回答:
+{
+    &quot;has_color_coding&quot;: true/false,
+    &quot;color_coded_cells&quot;: [
+        {&quot;location&quot;: &quot;セル位置や範囲&quot;, &quot;color&quot;: &quot;色の説明&quot;, &quot;likely_meaning&quot;: &quot;推定される意味&quot;}
+    ],
+    &quot;has_merged_headers&quot;: true/false,
+    &quot;merged_areas&quot;: [
+        {&quot;location&quot;: &quot;セル範囲&quot;, &quot;description&quot;: &quot;結合の説明&quot;}
+    ],
+    &quot;annotations&quot;: [
+        {&quot;location&quot;: &quot;位置&quot;, &quot;text&quot;: &quot;注釈テキスト&quot;, &quot;type&quot;: &quot;footnote/comment/note&quot;}
+    ],
+    &quot;format_based_semantics&quot;: [
+        {&quot;location&quot;: &quot;セル位置&quot;, &quot;format_type&quot;: &quot;bold/italic/color/strikethrough&quot;, &quot;likely_meaning&quot;: &quot;意味&quot;}
+    ],
+    &quot;visual_issues&quot;: [
+        {&quot;type&quot;: &quot;issue_type&quot;, &quot;description&quot;: &quot;問題の説明&quot;, &quot;severity&quot;: &quot;error/warning/info&quot;}
+    ]
+}</pre></div></details>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li><b>出荷コードではこの呼び出しは送信前に TypeError で失敗する。</b> <code>_generate_with_image</code> が mime_type を位置引数で渡すが、<code>AIClient.generate_json_with_image</code> の mime_type はキーワード専用（harunobu/core/ai_visual_analyzer.py:108 と harunobu/core/ai_client.py:206-213）。例外は L1-05 / L1-11 の <code>except Exception: pass</code> に握りつぶされ、ログにも出ない。</li><li>画像は <code>soffice --headless --convert-to png</code> で作る（harunobu/core/ai_visual_analyzer.py:160-174）。この変換はシートを 1 枚の PNG にしかしなかった（rule_11 は 7 シートあるが PNG は先頭シート OK-01 の 1 枚）。シート名が画像と合わないと先頭画像にフォールバックするので（harunobu/core/ai_visual_analyzer.py:376-395）、修正しても全シートに同じ画像が送られる見込み（推定）。</li><li>Docker イメージ（リポジトリの Dockerfile）には LibreOffice が入っていないので、そこではこの機能自体が無効（is_available() が False）。今回は libreoffice-calc に加えて PNG 出力フィルタのために libreoffice-draw が必要だった（calc だけだと「no export filter」）。</li><li>画像は base64 の data URL として、テキストより前に置かれる（harunobu/core/ai_client.py:406-415）。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>{&quot;has_color_coding&quot;: bool, &quot;color_coded_cells&quot;: [{&quot;location&quot;,&quot;color&quot;,&quot;likely_meaning&quot;}], &quot;has_merged_headers&quot;: bool, &quot;merged_areas&quot;: [{&quot;location&quot;,&quot;description&quot;}], &quot;annotations&quot;: [...], &quot;format_based_semantics&quot;: [{&quot;location&quot;,&quot;format_type&quot;,&quot;likely_meaning&quot;}], &quot;visual_issues&quot;: [...]} — dict でなければ空の結果</code><br><span class="cite">解析: harunobu/core/ai_visual_analyzer.py:436-439, 454-479, 506-523</span></p>
+</section>
+<section class="method" id="analyze_visual_layout">
+  <header class="mh">
+    <h3><code>analyze_visual_layout</code></h3>
+    <span class="pill direct">直接呼び出し</span>
+  </header>
+  <p class="purpose">ワークブック全体のスクリーンショットから、シートごとの表の数・色分け・結合・装飾などを一括で評価させる。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>（ルールからの呼び出しなし）</dd></div>
+    <div><dt>モード</dt><dd>—</dd></div>
+    <div><dt>表データの表現</dt><dd>全シートの画像（実際には 1 枚）+ 固定の指示文</dd></div>
+    <div><dt>共通前置き</dt><dd>なし</dd></div>
+    <div><dt>この例の出所</dt><dd>直接呼び出し（direct call）: rule_11_format_based_semantics.xlsx analyze_visual_layout（ルールからの呼び出し元なし）</dd></div>
+  </dl>
+  <div class="imgrow"><figure><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAxsAAARkCAYAAAAaDQlTAAAACXBIWXMAAAsWAAALFQEGDaotAAAgAElEQVR4nOzdeXwN1/8/8NdNRDZBCCELIURKEIlY0tjVro02xPZpYq1939UHH1XxLRpFo6UfakmRUJrWromt1FKEoqQoGoIQSZD1vn9/5Jf5ZNwkbtJcJF7Px2Mej3vPnDl3zsmcm3nPnTlHIyICIiIiIiKioqUxetV7QEREREREJRODDSIiIiIiMggGG0REREREZBAMNoiIiIiIyCAYbBARERERkUEw2CAiIiIiIoNgsEFERERERAbBYIOIiIiIiAyCwQYRERERERkEgw0iIiIiIjIIBhtERERERGQQDDaIiIiIiMggGGwQEREREZFBMNggIiIiIiKDYLBBREREREQGwWCDiIiIiIgMgsEGEREREREZBIMNIiIiIiIyCAYbRERERERkEAw2iIiIiIjIIBhsEBERERGRQTDYICIiIiIig2CwQUREREREBsFgg4iIiIiIDILBBhERERERGQSDDSIiIiIiMggGG0REREREZBAMNoiIiIiIyCAYbBARERERkUEw2CAiIiIiIoNgsEFERERERAbBYIOIiIiIiAyCwQYRERERERkEgw0iIiIiIjIIBhtERERERGQQDDaIiIiIiMggGGwQEREREZFBMNggIiIiIiKDYLBBREREREQGwWCDiIiIiIgMgsEGEREREREZBIMNIiIiIiIyCAYbRERERERkEAw2iIiIiIjIIBhsEBERERGRQTDYICIiIiIig2CwQUREREREBsFgg4iIiIiIDILBBhERERERGQSDDSIiIiIiMggGG0REREREZBAMNoiIiIiIyCAYbBARERERkUEw2CAiIiIiIoNgsEFERERERAbBYIOIiIiIiAyCwQYRERERERkEgw0iIiIiIjIIBhtERERERGQQDDaIiIiIiMggGGwQEREREZFBMNggIiIiIiKDYLBBREREREQGwWCDiIiIiIgMgsEGEREREREZBIMNIiIiIiIyCAYbRERERERkEAw2iIiIiIjIIBhsEBERERGRQTDYICIiIiIig2CwQUREREREBsFgg4iIiIiIDILBBhERERERGQSDDSIiIiIiMggGG0REREREZBAMNoiIiIiIyCAYbBARERERkUEw2CAiIiIiIoNgsEFERERERAbB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n6B///655s/IyMCYMWOUeViet2XLFnTp0gUODg4ICQnBJ598AhsbGzx58qTI6vUyJCQk4Ntvv0X58uXRtGnTPPN9/PHHePjwISZPnozly5fDwcEB/fr1U51kHDlyBCtWrEDr1q0REhKCkSNH4scff4S3tzeSk5OVfLt374a/vz9cXV2xadMmzJ07F5GRkejatSsyMjIMWt+idubMGezfvx9ubm6oUaNGrnn0bRd9ygL0O96LC33qou8xOmvWLCxYsABDhgzB5s2b4ejoiC5duuC3335T8ty9exdarRajRo3C6tWrMWzYMOzcuRMdOnTI98LD60jfdtGnjfv06YOwsDDVMnz4cABAhw4dVHlNTEx08nbu3LnoKkZEr59XOX95cbNlyxapVauWajExMZGqVauq0ry8vPItJygoSJydnaVcuXLStm1befvttyUuLi7XvPv375datWqJiMi4cePEzs5OGjdurLOUKVNGwsPDi7zOb4LMzEzltampqcyePVsnT0xMjCqfiMjMmTMFgNy8eVMn/5IlS8TDw0OGDx8u9vb2qnWJiYlSoUIFGTNmTNFU4BXSarXK6wULFkheXylXrlzRSfPx8RFnZ2flfWxsrCQmJqry7Nu3TwDI+vXrlbSAgABxcnJS/T02bdokACQ6OrrQdXkVctahY8eO0qpVK508+raLPmU9ny+v47240Kcu+hyjjx49ElNTU5k8ebKq7Dp16sh7772X7z5s375dAMjBgwcLUYNXR9++W9jj5f333xcnJydV2po1a8TU1LTgO0tExRl/2SiInj174urVq6qlevXqWLNmjSrtxIkTuW6v1WoxevRorFq1CpGRkbCyssLcuXPRrl07eHl54cyZMy/chxEjRuDkyZM6i7u7e1FX942hzwzszs7OOvnefvttANC59SkuLg5z585FcHBwrmVv374djx49wvTp0wEgz9vmioO8br14Xu3atXXSvL298eDBA+V91apVYWVlpcqT3cY586Wnp8PKykrVttbW1gAAKWZzlOpz7OnbLvqUVZB8xYE+ddHnGL106RJSU1PRsWNHVdnt27fHnj178v3FzM7ODkDWcVmc6Nt3C3O8JCYmYufOnejTp0+u60UEz549K3C5RFQ8lZz/OgbWvHlzODo66izXr19H//79c133/fffK9tHRETAw8MDkZGRiIqKgqOjIwAo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117bkG/zS2XnnXeOiNqHC6/tRHHfB+Crx78uJZo5c2Z069atcAWPWbNmxdKlS9f62G+//QrLVVRUREpprY/dd9897rnnnrU+tyY2DjjggKipqYnFixfH+PHjo6amJmpqaqJVq1Zx9913R01NTcycOTPmzp1beO6rfKJiTqeddlo8+uijMWrUqMI/rp/2yiuvRN++faNPnz5x4403fub65s6dG88999xX4q8aixcvjj59+kRExCOPPFL0wxrrV9OmTaNTp05Rr169uOKKK2K//faLdu3aRcTqH/4+eYO6iIgPPvggHnzwwdhzzz03xtv90rn77rujefPm0bNnz1rPtW7dOmbOnBmLFi0qTKupqYlp06Z9JX5hsC6HHXZYREQ8/vjjhWk1NTXx3HPPFYI3wvcB+KryK4USzJgxI7p16xZ9+/aNoUOHRuPGjaNBgwa1rvyyxvr8DWFFRUU0atQozjjjjBg+fHhMmjQp2rRpE+Xl5dGwYcNo3LhxDBkyJB555JEYPnx4dO3adb299lfF3LlzCyfWrlq1KqZOnRojRoyIBg0aRN++fSNi9cn+t9xyS5x00knx5ptvFp0306NHj9hmm23i/fffjz59+kR5eXkcccQRcd999xXmadq0aa0fXoYNGxYVFRUxYMCADTDKfB555JFYsmRJ4Q7Ua7bNHnvsUTin6dhjj40pU6bEVVddFU899VTR8v379y+cUzBp0qT429/+VjgH6amnnooFCxbE9ttvH926dYuIiA8//DAeffTRiFh9WOOyZcsKr3nIIYes87LRX0aljqWU7TJ69OgYPXp0dOrUKRYuXBjDhg2L2bNnx/jx4wuvN2/evNh3333jO9/5Tuywww6xYMGCuOWWW2L+/Plx7733bsihrxel7LsRpX1GIyKWLl0a999/f5xwwgm1brAaEXHyySfHzTffHH369Imzzz47IiJuvPHGWLhwYZxyyinZxplLKdullG288847x3HHHRfnnntuLFq0KFq0aBE33HBDLF26NH784x8XXq/U7wPAZmaD39pjE7Ry5cr0u9/9LqWU0ooVK1JEpNdff32d8x9wwAHp5ptv/tz1lnJTv5qamjRgwIC07bbbpldeeaUwvU2bNumBBx4ofH355ZenBg0apDvuuONzX5dit95661pvzNi8efPCPMccc8w6b+D40EMPpZRSmjZt2jrn6dy5c63X3XXXXTeLm6u1bNlyrWO+6aabCvM0b958ndtm8eLFhfmOO+64tc5zzDHHFOaZOXPmOtc1bdq0DTr2f1WpYyllu0ycODF17do1NW7cOFVVVaW+ffuml19+uej1Fi9enL7zne+k1q1bp3r16qUmTZqkgw8+OP35z3/eYGNen0rZd1Mq7TOaUkojRoxIEZEmTJiwztccO3Zs2n///VN1dXWqrq5O++67b3ryySezjC+3UrZLqdt4yZIl6ZxzzklbbbVVql+/furevXsaP3580Tylfh8ANitRltImdieijWzlypUlHWN68803x/e///2iaSmlePvtt6O8vDxWrlwZ++67bwwZMiT69eu3ztfae++9Y8WKFTFy5MjCpRYjInbYYYe47rrr4vDDDy9MGzZsWAwaNCiGDRvm6h4AAGxsZQ6j+iesuVnRuq7wcv7558c222xTa3pZWVn07ds3pkyZEg0bNox/+7d/q3VX30+qqKiIoUOHRocOHWpdRrd9+/a1DhcZOHBgdOjQoegYWQAA2Fj8ZQMAAMihzNWoAACALMQGAACQhdgAAACyEBsAAEAWYuNfMHXq1Pj2t78dK1eu/Nx5R40aFT/5yU/W+XzPnj3jV7/6VQwcODA++uij9fk2AQBgoxAbJVqxYkV8/PHHRY/mzZvH2LFjY8SIEbWe+/jjj4uWf/fdd2P27NnrXH/dunWjdevWUVZWFoMGDVrrPOedd140b948OnXqVOvRuHHj+NOf/rQ+h/yVsGLFirjhhhviwAMPjGbNmkWzZs2id+/eMWnSpKL5ZsyYEf37949WrVpFgwYNYvvtt48TTjgh/vGPf9Ra5/333x+dOnWKBg0axNe//vVad2aeMmVKnHrqqdG+ffto1KhRdOjQIX75y1/G0qVLs441h1LHMnLkyDjyyCNj++23j6qqqujcuXMMGzas1vrmz58f//7v/x7V1dVRWVkZ3/rWt2LOnDn/1Lo2BaWM5e23346LL7449thjj6iqqortt98+Bg0aFG+++Wat9f3xj3+Mzp07R2VlZbRs2TKOP/74eP3112vN93mf0U1BqfvuF9nfPvjggzjnnHOiRYsW0bBhw9h5553jlltuqTXf6NGjo3v37tGoUaNo1qxZfPOb34x3330321hzKGW7lLqN586dG2VlZbUen77f0+a07wJfwEa9p+Am5Kc//ek673y6rseCBQsKy992223pqKOOSimtvgt5TU1N0aN3797p9ttvT2+88Ubaf//908KFC1NKKc2fPz/9n//zf1JKKZ177rnpsssuW+v769GjRxoxYkTmrbD5mT9/fqpbt24aOHBg+u///u900003pV133TXVq1cvPf/884X5nnrqqfTtb387XX311enOO+9Ml112WWrWrFnq2LFj+uijjwrzjRs3LpWXl6eTTjopPfLII+nUU09NZWVl6bHHHivMc8YZZ6T27dunyy67LN15553p7LPPTnXq1ElHHnnkBh37+lDqWHbdddd0wAEHpOuvvz7ddttt6dvf/naKiHTDDTcUzbfPPvukrbfeOt16663pnnvuSbvssktq06ZN0d2FS13XpqCUsQwfPjxVV1en8847L915553pyiuvTFtuuWVq3bp10XZ59NFHU0SkgQMHpoceeijdeuutqUWLFmm33XZLy5cvL8xXymd0U1DqvlvqZ/Sjjz5Ke+65Z2rRokW66qqr0p133pl++ctf1vqee++996aysrJ09NFHp9tuuy3ddNNN6fjjj09/+9vfNsi415dStkup23jOnDkpItIVV1yRhg8fXnh8+k7sm9O+C5RMbJTqpz/9aTr33HNLmvf999//zNh44oknPjdUfvrTnxbmbdeuXUppdWy0aNEi7bnnnrUelZWVYuOfsHTp0lo/JCxYsCA1adIknXzyyZ+57AMPPJAiIj311FOFaT179kxdunQpmq9Hjx5pn332KXw9a9astHLlyqJ5LrroohQR6e9///s/O5SNotSxzJgxo9ayPXr0SG3bti18veaH5Ycffrgwbe7cualOnTrp17/+9Rda16ailLG8+eabadGiRUXzPP744yki0p133lmYdsIJJ6Q2bdoU/f+45557UkSkl156qTCtlM/opqDUfbfUz+jll1+eqqqq0ty5c9f5mosWLUpNmzZNZ5999noaxcZTynYpdRuviY1Px8WnbU77LlAyh1F9Uf/4xz9iq622WufjrLPOqrXMdtttF2eeeWY8+OCDsdVWW8Wbb74Ze+21V6SUCo/jjz8+hg4dWvj6yiuvXOvrn3766TFp0qRaj9133z330DdL9evXj1atWhVN23LLLaNjx46xYMGCz1y2RYsWERGxfPnyiIhYsmRJPP3003H00UcXzTdgwICYMGFCfPDBBxER0bZt2ygvL9711txJflM7FKPUsey00061lu3evXvRNp48eXKUl5fHwQcfXJjWunXr6NChQzz88MNfaF2bilLGsu2220ZVVVXRPGu28SfnW758eVRVVRX9/6iuro6IiPT/791a6md0U1DqvlvqZ/R3v/tdHH/88dG6detYtWrVWl/zgQceiIULF8YFF1wQEbHO+TYFpWyXf+b742edc7g57btA6cRGiS666KK45JJLYtWqVbFixYqYP39+rceZZ54ZNTU10aRJk3j77bejadOmERHx7LPPxi9+8Ys46KCD4vnnn4+tt9661vqbNm0a77//fkREjB8/Pj788MO1vo/f/va30aVLl1qPKVOm5Bv8V8zixYtj2rRpseuuu9Z6bunSpbFo0aJ46aWX4ic/+Unstttusd9++0VExKxZs2LFihWx8847Fy3TsWPHWLVqVcyYMWOdrzlx4sSoW7dutG/ffv0OZiModSwTJ04s2sZLly6NioqKqFOnTtF8DRo0iGnTpn2hdW3KShnLxIkTIyKK5jvxxBNj6tSpccMNN8S7774bU6dOjZ///Oex3377RadOnSLiX/uMbgo+a9/9pE9/RufPnx+zZ8+ONm3axGGHHRb169ePJk2axEknnRSLFy8uLPfcc8/FjjvuGA899FC0bNky6tSpE7vuumtRDG/KStl3P2sbH3LIIdGoUaPYYost4pRTTolFixaV9Jqby74LrF2dz5+FiIjKysqIiHjvvfc+d96ysrJo3rx54etWrVpFs2bNonHjxtG6deuYNWtWTJw4MaqqqmLFihVx1FFHRdu2bWPhwoUxb9686NWrV7zxxhvRuHHjWus+/fTT46KLLqo1fd999/0XRscnXXDBBbFq1ar43ve+V+u5fv36xWOPPRYRq3/QGz16dNStWzciIhYuXBgREV/72teKllnz2+U1z3/anDlz4j//8z/jlFNOiUaNGq23cWwMpY7lT3/6U4wbNy6GDx9emLbTTjvF8uXL48UXXyz8pW7x4sXx6quvfuYV39a2rk1VKWNZtmxZ/OAHP4jddtstDjzwwML0Xr16xbBhw+KEE06Is88+OyJW/6Z65MiRUVZWFhH//Gd0U/FZ++4aa/uMvv322xERcemll8ahhx4ao0aNildffTUuvPDCWLZsWdx1112F+d5555244IIL4qqrroqWLVvG9ddfH/369Yu//vWv0bFjx/yDzKTUfXdt27hevXoxePDg6NWrVzRu3DieeeaZuO6662LGjBkxduzYwufv0zanfRf4DBvzIK5N0dy5c1NZWVlq1qxZrUejRo3SoEGD1rrcJ8/ZGDNmTNprr71SSqtPNjzxxBPTb37zmzRo0KB0/fXXp169ehWW+/Q5G9tss03afffdaz0aN27snI314H/+539SWVlZuv3229f6/Msvv5zGjRuX/vu//zvttNNOaZdddikcTz9u3LgUEenPf/5z0TITJ05MEZHGjBlTa30ffPBB2m233dJuu+2Wampq1v+ANqBSx/Liiy+mJk2apJNOOqloek1NTdp2221Tt27d0vTp09Mbb7yRjj322FReXp4qKyu/0Lo2RaWOZdCgQalJkybp5ZdfLpr+9NNPp8rKynTqqaemMWPGpLvuuiu1bds27bfffoUTxP+Zz+im4vP23ZTW/RmdMmVKiojUvn37ovMYfvWrX6WysrLCOQz9+vVLEZHuuuuuwjwffvhh2mqrrdLgwYMzjGrDKHXfLWUbr3HTTTeliEhjx45d6/Ob074LfCax8a8YP358qlOnTnr33Xc/d95Pxsa9996bDjjggJRSSnfddVcaPHhweuihhwonbg4dOrSw3Cdjg7xGjRqV6tSpky699NKS5l8Tntdff31KafU/nhGRHnrooaL5xowZkyIiTZw4sWj60qVL04EHHphatWqVXn/99fUziI2k1LHMmTMntWjRIh1yyCFFV0ha4+mnn06tW7cuXCihR48e6YgjjljrCaSft65NSaljueCCC1K9evXSE088Ueu5Ll26pIMPPrho2gsvvJAiIt17770ppS/+Gd1UlLLvftZn9O9//3uKiFrB8PzzzxdF2EknnZQiotbyffv2Td27d19Po9mwSt13v+j3xwULFqSISEOGDKn13Oa07wKfyzkb/4onnngievbsWTg3oxTLli2LN954o3DC50cffRQNGzaMDh06xKRJk+L111+P7373u0XLzJo1a63XMF/X4w9/+MN6HedXwbPPPhsDBgyIwYMHx89+9rOSlmndunU0bdq0cP+Udu3aRZ06dWqdXzBt2rQoLy8vOg561apVMXDgwJgyZUqMHj06WrZsuf4Gs4GVOpb58+dH7969o0WLFjFixIha52ZErD4ccPbs2TFt2rR47bXX4plnnom5c+fGXnvt9YXXtakodSzXXXddXHXVVXHbbbfFQQcdVOv56dOn17pQxG677RZlZWXx2muvRcQX+4xuKkrZdz/vM7rddttFVVVV4UT6Ty4XEYUTqdec67K2+T59svWmoNR995/5/rhixYqIiFrbZXPad4ESbezc2ZSs+S3X5z3atGlTa9lrr702tWjRIjVr1iz17NkznXXWWSml1ZdbvPjii9Py5ctTRUVFuv7669PKlSvTihUrUkr/e0+OxYsXp/Hjxxfuy9GqVat09913p5qamjRz5sw0d+7cwnN+U/TFvPzyy6m6ujodccQRtS4Fucaa/x+ftObzcN111xWm9ezZM3Xu3DmtWrWqMK179+61Lit6yimnpIYNG6bx48evp1FsPKWMZdGiRWmPPfZIO+20U5o3b17J6x45cmSKiMK9Zv6VdX0ZlTqWu+66K5WVlRVdAvjTdt1113TggQcWTZswYUKKiDRs2LDCtFI/o5uCUvbdlEr7jB5zzDFpxx13LPr+ecUVV6SKior01ltvpZRSmjp1aoqI9Pvf/74wz+LFi1PTpk3TGWecsR5GtGGVsl1K2cZr+zfnmmuuSRGRnnnmmcK0zWnfBUrmBPEvqlmzZjF//vx1Pv/YY4/FqaeeWvh6yZIl0aVLl5gxY0Z85zvfiTPPPDOuvPLK2GGHHWLHHXeMmpqaGDFiRNx8882xcuXKaN++fbz77rtx1llnxT333BMVFRXRqFGjOOOMM2L48OExadKkaNOmTZSXl0fDhg2jcePGMWTIkHjkkUdi+PDh0bVr1w2xGTYb77//fvTp0yfKy8vjiCOOiPvuu6/wXNOmTaNnz54REXHOOefE+++/H126dIkmTZrE9OnT49Zbb41WrVrFCSecUFjmP/7jP6Jnz54xaNCgOProo2PkyJExYcKEGD16dGGea6+9Nm655ZY46aST4s0334wRI0YUnuvRo0dss802G2Dk60epYzn22GNjypQpcdVVV8VTTz1VtI7+/ftHRUVFRER8//vfj/bt20d1dXVMnjw5hg4dGieffHLRidClrmtTUMpYJkyYECeeeGJ07do1tttuu6Jt3KFDh8KVpk499dQ488wz44QTToj+/fvHO++8E5dffnm0atUq+vbtW1imlM/opqDUfbfUz+hFF10UXbt2jf79+8eJJ54Yr776alxyySVx2mmnFebZeeed47jjjotzzz03Fi1aFC1atIgbbrghli5dGj/+8Y834Oj/daVsl1K38Q9+8IOYP39+dOvWLSorK2P8+PFxxx13RJ8+faJHjx6FZTanfRf4AjZ27mxKnn/++dSsWbPPnGf06NG1/rJx8cUXp9mzZ6eUVh8fW1VVlWbOnFl4ftKkSamysjIdfvjh6Qc/+EF69dVX0+GHH55SWn3S7IABA9K2226bXnnllcIybdq0SQ888EDh68svvzw1aNAg3XHHHf/yOL9Kpk2bts6/UHXu3Lkw3wMPPJAOPPDAtOWWW6YGDRqk9u3bp7PPPju98847tdZ53333pV122SXVq1cvdezYMd19991Fzx9zzDHrfM1PH0v/ZVfqWJo3b77O+T55F+yzzz47tWjRItWrVy+1a9cuXXPNNbX+qlTqujYFpYxlzYm2a3ucf/75hXWtWrUq3XzzzWm33XZLjRs3Tttuu2066qij0qxZs2q97ud9RjcFpe67X2R/GzduXOratWuqX79+2mabbdIPf/jD9PHHHxfNs2TJknTOOeekrbbaKtWvXz917959k/wLZSnbpdRtfM8996S99torVVdXp7p166Ydd9wxXXTRRemjjz4qes3Nad8FShZlKX3q4FPW6YUXXog999zzM48xXbVqVbRq1SrmzJmz1udvvPHG+P3vfx8vvPBCRKy+kVmvXr3ivPPOi759+0bv3r3j4osvjr/97W9x9dVXx9577x0rVqyIkSNHxvbbb19Yzw477BDXXXddHH744YVpw4YNi0GDBsWwYcPiqKOOWk+jBgCAf0qZw6i+gKqqqjjiiCPiT3/60zrnmTJlStxyyy3rfP6xxx6La665pvD1f/7nfxbunVFWVhYDBw6MX/ziFzFmzJioqKiIoUOHRocOHWpd97x9+/a17io8cODA6NChQ3zjG9/4J0cIAADrj79sbGArVqwo+stISmmdNzwCAIBNWJnYAAAAcijb9C4MDgAAbBLEBgAAkIXYAAAAshAb/4TJkyfHBRdcEP/4xz+Kpnfu3Dk++OCDjfSuAADgy0VslGjo0KFx7LHHRuvWrWPvvfeO6dOnx9y5cwvPp5TiL3/5y1qXffjhh6OsrKzkx84777zW9Zx33nnRvHnz6NSpU61H48aNP/OSvPzrJk+eHD179oyGDRvG1ltvHWeddVYsWbKk1nwffPBBnHPOOdGiRYto2LBh7LzzzrUuh/z+++/HoEGD4mtf+1psscUWcdxxx8W77767oYayUdx7772xyy67RP369aNt27bxm9/85jPn/9nPfhZlZWVx/PHHF02fOnVqDB48OHbdddcoLy+PAw44IOO7/nKYP39+/Pu//3tUV1dHZWVlfOtb36p1L5+RI0fGkUceGdtvv31UVVVF586dY9iwYUXzrFixIk488cTo2LFjNG7cOJo1axa9e/eOCRMmbMjhbHCl7rv3339/dOrUKRo0aBBf//rX49577y16fu7cuWv9nr0539do+fLlcdlll8VOO+0UjRo1irZt28bFF18cS5cuLZrvL3/5S/Tp0ye23HLLaNq0aRx00EFr/Vz98Y9/jM6dO0dlZWW0bNkyjj/++Hj99dc31HCAjcB9Nkq0ZMmS2GeffWLLLbeMN954I+6///6i51euXBkRERUVFWtd/utf/3qMGTOmaFqnTp3i9ttvjz322KOxuhfOAAAgAElEQVQwbfTo0XHttdcWvl6wYEH89a9/jQMPPDAiIs4+++y46KKLaq1/3333/ecGRknmzZsXPXv2jJ122inuvPPOmDdvXlx00UXx1ltvxYgRIwrzLV26NHr16hVvvvlmnHPOOdGyZcuYPXt2zJ8/v2h9Rx11VEydOjX+67/+KyoqKuInP/lJ9OvXL5555pkNPbQNYsyYMfGd73wnjjvuuLjyyivj2WefjXPPPTfKy8vjzDPPrDX/7Nmz4ze/+U00bdq01nOTJ0+OJ554Ivbaa6/46KOPNsTb3+j69+8fM2fOjF/96ldRVVUVl156afTs2TP++te/RmVlZUSsjrNmzZrFj370o9hiiy3ivvvui+OOOy7ee++9wjZeuXJlzJo1K4455pho27ZtLF68OIYOHRq9evWK559/fp2/6NiUlbrvPvXUU3HUUUfFoEGD4pprrokHH3wwjj322Kiuro7evXsXrfOKK66InXbaqfD1dtttt8HGs6FdfPHFce2118bFF18cXbt2jRdeeCEuueSSeO+99+LGG2+MiIi33norevXqFTvuuGPcfPPNUV5eHtdee2307t07Xnzxxdhxxx0jYvW/b8ccc0wMHDgwfvnLX8bbb78dP//5z+Owww6LF1544TNvmAtswjbe3cs3Tf/1X/+V+vXrV/h62bJladmyZemjjz5KEZE++uijlFJKNTU1hXlGjRqVdt9991rratasWXruueeKpj3wwAOpY8eOha+feOKJ1K5du5RSSueee25q0aJF2nPPPWs9Kisr04gRI9brWPlfP/nJT1KjRo3SvHnzCtP+8Ic/pIhIkydPLky7/PLLU1VVVZo7d+461/X000+niEijRo0qTHv88cdTRKTHH388zwA2sm7duqUuXboUTfve976XmjVrlpYvX15r/m9/+9vp3HPPTbvssks67rjjip5buXJl4b8POeSQtP/++2d5z18Wjz76aIqI9PDDDxemzZ07N9WpUyf9+te/LkybMWNGrWV79OiR2rZt+5nrX7BgQaqoqEi//OUv19+b/hIpdd/t2bNnrc9ojx490j777FP4es6cOSki0oQJE/K/8S+J1q1bp+9+97tF00499dTUtGnTwtf/8z//kyIizZ49uzDtrbfeShGRfvOb3xSmnXDCCalNmzZF+/A999yTIiK99NJLGUcBbEQOoyrVhx9+GB9++GF8/PHHsWLFisLXjzzySPTv3z+WL18ederUiQYNGsTHH38c2223Xbzyyivr/X2cfvrpMWnSpFqP3Xfffb2/Fv9r8uTJsccee8RWW21VmLbmt50PP/xwYdrvfve7OP7446N169axatWqta7r0UcfjaqqqvjmN79ZmHbQQQfFlltuGY8++mimEWw8KaV48cUX45BDDima3rt371iwYEH83//7f4umP/bYY/Hss8/Gz3/+87Wur7z8q/Vta/LkyVFeXh4HH3xwYVrr1q2jQ4cORZ+9T/6mfY3u3bvHggULPnP9TZs2jYYNG8by5cvX35v+Eill312yZEk8/fTTcfTRRxctO2DAgJgwYcJaz8X7qvxVbfny5bHFFlsUTauuro70iVt0rfnsfHK+LbbYIsrLy2vNV1VVVbQPV1dXR0QUzQdsXr5a/2r/k1auXBmVlZVRWVkZ559/fowaNSoqKyujTZs28corr0SHDh1i3rx5UVVVFRGrDxlp2bJl7LLLLuv9vfz2t7+NLl261HpMmTJlvb8W/2vp0qVRv379omkNGjSIiIhp06ZFxOrj6mfPnh1t2rSJww47LOrXrx9NmjSJk046KRYvXlxYbvr06dG+ffuif3DLysqiQ4cOMX369A0wmg1rxYoVsXz58s/dfhGrfxg555xz4pJLLomvfe1rG/R9flktXbo0Kioqah1i0qBBg6JttzYTJ06MXXfdtdb05cuXR01NTcydOzfOOeecKC8vj+9+97vr9X1/WZSy786aNStWrFhR6zCyjh07xqpVq2LGjBlF0w855JBo1KhRbLHFFnHKKafEokWLMo5g4xo8eHDceeed8fjjj8f7778fY8eOjVtvvbXo8Md+/frFlltuGeedd168/vrrhcNIt9xyyzjmmGMK85144okxderUuOGGG+Ldd9+NqVOnxs9//vPYb7/9olOnThtjeMAG4ADJElRUVERKKVJKscsuu0R5eXm88MILUb9+/ejZs2cMHjw4Xn/99cJvsm+//fY45ZRTitaxbNmyeOONN4qmrVy5MubNm1c0/fN+C3n66ac7Z2Mj2GmnneKhhx6KZcuWRb169SIiYtKkSRER8d5770VExNtvvx0REZdeemkceuihMWrUqHj11VfjwgsvjGXLlsVdd90VERELFy5c6w/S1dXVhXVtTurWrRtt2rSJ559/vmj6p7dfRMSvf/3rqFevXq3956tsp512iuXLl8eLL75Y+Avm4sWL49VXXy2cK7Y2f/rTn2LcuHExfPjwWs8NGTIkLrjggohY/bl78MEH1/qXkc1BKfvuwoULIyJq7Zdrfuu+5vl69erF4MGDo1evXtG4ceN45pln4rrrrosZM2bE2LFjo6ysbIOMaUP6xS9+ETU1NUXnrZxxxhlxySWXFL7eaqutYty4cXHooYfG9ttvHxERLVq0iMcffzyaN29emK9Xr14xbNiwOOGEE+Lss8+OiIh99tknRo4cuVluO+D/25gHcW1qRo8enSIiNWjQIJ122mlp+vTpqbq6Oi1ZsqRwDPC4ceNSs2bN0uLFiwvLjRo1KkVEyY/POmdjm222SbvvvnutR+PGjZ2zkdHzzz+fysrK0ve+97301ltvpZdeeil16tQplZeXp759+6aUUpoyZUqKiNS+ffuiY5J/9atfpbKysvT3v/89pZTSAQcckHr16lXrNQ499NDUvXv3DTOgDWzIkCGpvLw83Xzzzem9995LDz/8cGratGmKiHTttdemlFJ68803U1VVVXriiScKy63tnI1P+iqcs1FTU5O23Xbb1K1btzR9+vT0xhtvpGOPPTaVl5enysrKtS7z4osvpiZNmqSTTjpprc//4x//SM8880waPnx46tWrV9piiy3SX/7yl5zD2GhK2XfHjRuXIiL9+c9/Llp24sSJKSLSmDFj1rn+m266KUVEGjt2bM5hbDRDhgxJjRo1SldffXV68skn05AhQ1JlZWW68MILC/O8/fbbqX379mn//fdPDz74YHrooYdSr169UosWLdKcOXMK8z399NOpsrIynXrqqWnMmDHprrvuSm3btk377bffWs/dAjYLYuOL6NOnT+rTp0/61re+lXbfffc0cuTIwkltl112WYqIdNddd6WpU6cWLbe+ThBn47rxxhtTZWVliohUXl6eTjnllNSuXbt08sknp5RS+vvf/54iIg0ePLhoueeff77oB5b+/funzp0711p/9+7d06GHHpp/IBvBsmXL0uDBg1N5eXmKiNSoUaN06aWXpohId955Z0oppZNOOin17t07LVy4sPDYeeed04ABA9LChQvTihUraq33qxAbKa3+Ia1169aFX0j06NEjHXHEEWs9+XvOnDmpRYsW6ZBDDinpB7hly5alDh06pP79++d4618Kn7fvvvjiiyki0kMPPVS03JgxY1JEpIkTJ65z3QsWLEgRkYYMGZJ1DBvDe++9l+rXr58uv/zyoulDhgxJFRUV6c0330wppfSjH/0oVVdXF/2SbcmSJWnrrbdOp512WmFaly5d0sEHH1y0rhdeeCFFRLr33nszjgTYiJyzUaonn3wyXn/99Tj00EOjoqIibrjhhujSpUvhONOxY8fGXnvtFaNHj17vl4+cNWvWF7pPxx/+8If1+vqsdvrpp8e8efPipZdeirfeeiuuuuqqmDNnTuy1114Rsfryl1VVVbVOdFxzeN2aczQ6duwYM2bMKDqBPKUUr776anTs2HEDjWbDqlu3btx6660xf/78eOmll+Kdd96Jb3zjGxERhe336quvxpgxY6K6urrwmDZtWvzxj3+M6urqmDx58sYcwka17777xuzZs2PatGnx2muvxTPPPBNz584tbLs15s+fH717944WLVrEiBEjSrqUaN26dWPXXXeN2bNn53r7G93n7bvt2rWLOnXq1DoHZtq0aVFeXh7t27df57pXrFgREZvnhQvmzJkTH3/8ca0LkOy+++6xcuXKwr2mpk+fHu3atStchjkiomHDhtGhQ4d47bXXCtOmT59ea1277bZblJWVFc0HbF42v++OGSxcuDAGDx4cl1xySeEflB49esS2224bEauvMT5+/Pi46aab4oEHHoiampr19toHHHBA1NTUxOLFi2P8+PFRU1MTNTU10apVq7j77rujpqYmZs6cGXPnzi0898kT8li/GjZsGJ06dYqtt946Lr300qisrCzc0KusrCwOPfTQGDt2bOEHkIiIJ554IioqKgoXDPjmN78ZixcvLrqS0OOPPx7vvvtu0RWqNkdNmzaNTp06Rb169eKKK66I/fbbL9q1axcRETfccEOMHTu26NGmTZvo1atXjB07Njp06LCR3/3GVV5eHh07dowdd9wxHnzwwfjLX/4SJ598cuH5xYsXR58+fSIi4pFHHin6wW+NtZ3jsWjRonjuuedihx12yPfmvwQ+a99t1KhR7LfffnHvvfcW/bLg3nvvjb333rtwlaVP7tdr3HHHHRERseeee26AUWxYrVu3joiodb7VxIkTIyKiTZs2hflmzpxZdKJ8TU1NTJs2rTDPmvk+va7nn38+UkpF8wGbFyeIl2DhwoXRrVu36N+/f+EmRp909dVXx+GHHx677757HHTQQXH11VfHpZdeul5eu6KiIho1ahRnnHFGDB8+PCZNmhRt2rSJ8vLyaNiwYTRu3DiGDBkSjzzySAwfPjy6du26Xl6XYu+880788Ic/jO7du0fE6iuOPfDAA3HHHXcUnVR60UUXRdeuXaN///5x4oknxquvvhqXXHJJnHbaabHNNttExOrfUh900EFxyimnxJVXXhkVFRVx4YUXRo8ePaJXr14bZXy5jR49OkaPHh2dOnWKhQsXxrBhw2L27Nkxfvz4wjz/9m//Vmu5xo0bR/PmzYvuEv7hhx8WLhH8zjvvxLJlywo3ZzvkkEMKV4XbnHz/+9+P9u3bF/7CM3To0Dj55JMLN/uMiDj22GNjypQpcdVVV8VTTz1VtHz//v2joqIi7rnnnvj9738fvXv3jm222SbeeuutuO2222L+/Pnx4x//eEMPa4Modd/9j//4j+jZs2cMGjQojj766Bg5cmRMmDAhRo8eXZjnBz/4QcyfPz+6desWlZWVMX78+LjjjjuiT58+0aNHjw0+tty23HLLOOqoo+LKK6+MVatWRefOnWPy5Mlx1VVXRb9+/Qq/cDv55JPj5ptvjj59+hRO/L7xxhtj4cKFRRd7OPXUU+PMM8+ME044Ifr37x/vvPNOXH755dGqVavo27fvRhkjsAFs3MO4Nh1rjn3+9E39Ro8enRo3blw4T2PKlCmpUaNGadKkSYV5Ro0alb7+9a+nuXPnFj2qq6vT/fffXzTtlltuKTpno6amJg0YMCBtu+226ZVXXilMb9OmTXrggQcKX19++eWpQYMG6Y477si2Db7K3n///dSnT59UXV2dGjRokLp06ZJGjhy51nnHjRuXunbtmurXr5+22Wab9MMf/jB9/PHHRfO899576bvf/W5q0qRJqqqqSscee2yaP3/+hhjKRjFx4sTUtWvX1Lhx41RVVZX69u2bXn755c9dbm0niM+cOXOdF1eYNm1ariFsVGeffXZq0aJFqlevXmrXrl265pprap3D0rx583VulzXH0r/88svpyCOPTC1btkz16tVLrVq1SkceeWR68cUXN8awNogvsu/ed999aZdddkn16tVLHTt2THfffXfR8/fcc0/aa6+9UnV1dapbt27acccd00UXXVS4mevmaNGiRelHP/pRatu2bWrQoEHacccd0/nnn58++OCDovnGjh2b9t9//1RdXZ2qq6vTvvvum5588smieVatWpVuvvnmtNtuu6XGjRunbbfdNh111FFp1qxZG3JIwIYVZSm5k84XceONN8YTTzwR999/f9x9993x/e9/P2666aY47rjjCvPccMMNceGFF8add94Z/fr1i4cffvgL/damY8eOMW3atFi5cmXsvffesWLFihg5cmThkoIRETvssENcd911cfjhhxemDRs2LAYNGhTDhg0rHB4AAAAbSZnDqL6gqqqq2HrrrSMiYsKECXH33XfHYYcdVjTPWWedFZWVlfHxxx9HxOpDQfr16xf333//567/ySefjCFDhkTE6kOohg4dGh06dIhGjRoVzde+fftah4sMHDgwOnToUDjxFgAANiZ/2QAAAHIoczUqAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EBAABkITYAAIAsxAYAAJCF2AAAALIQGwAAQBZiAwAAyEJsAAAAWYgNAAAgC7EB/L/266AEABgGYGAH86+5KsJg3CnINwAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsALrNsSEAAAYjSURBVAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAACbMBAAAkzAYAAJAwGwAAQMJsAAAAiTsz53UEAADwnwVJ10hUpsRXhgAAAABJRU5ErkJggg==" alt="送信された PNG（rule_11 の先頭シート OK-01 を LibreOffice で描画したもの）" loading="lazy"><figcaption>送られた画像そのもの（PNG 34,465 バイト）</figcaption></figure><div class="imgmeta"><p>メッセージの構成: 画像 1 個 → テキスト 1 個の順。</p><p>画像パート: <code>data:OK-01;base64,…</code>（base64 45,956 文字）</p></div></div>
+  <div class="pre-wrap"><pre>以下はExcelファイルの各シートのスクリーンショットです。
+各シートの見た目から以下を分析してください。
+
+行政データの機械可読性の観点で問題を検出してください:
+1. 色・背景色で意味を持たせているセルがあるか（色がないと意味が分からなくなる）
+2. セルの結合が使われているか（特にヘッダー部分）
+3. 表の外に注釈・脚注・メモが配置されているか
+4. 装飾的な要素（ロゴ、画像、罫線装飾）があるか
+5. 複数の表が1シートに配置されているか
+6. 印刷用レイアウト（タイトル行、余白、ページ区切り）が見えるか
+7. 空白行・空白列で区切られたセクション構造
+8. ヘッダー行が複数行にまたがっているか
+
+JSON回答:
+{
+    &quot;sheets&quot;: [
+        {
+            &quot;sheet_name&quot;: &quot;シート名&quot;,
+            &quot;tables_found&quot;: 1,
+            &quot;has_color_coding&quot;: false,
+            &quot;has_merged_headers&quot;: false,
+            &quot;has_decorative_elements&quot;: false,
+            &quot;has_annotations_outside_table&quot;: false,
+            &quot;layout_description&quot;: &quot;表の配置や構造の説明&quot;,
+            &quot;issues&quot;: [
+                {&quot;type&quot;: &quot;color_coding&quot;, &quot;description&quot;: &quot;問題の詳細&quot;, &quot;location&quot;: &quot;セル範囲やエリアの説明&quot;}
+            ]
+        }
+    ],
+    &quot;overall_quality&quot;: &quot;good/fair/poor&quot;
+}</pre></div>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>harunobu/ 配下のどのルールからも呼ばれていない。</li><li><b>data URL の MIME 型にシート名が入る。</b> capture_sheets が返す (シート名, PNG) の組をそのまま (mime_type, data) として渡しているため、<code>data:OK-01;base64,…</code> になる（harunobu/core/ai_visual_analyzer.py:305, 341 と harunobu/core/ai_client.py:407-412）。実際に送られた本文で確認した。</li><li>指示文は固定で、シート名もデータも入らない。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>{&quot;sheets&quot;: [{&quot;sheet_name&quot;,&quot;tables_found&quot;,&quot;has_color_coding&quot;,&quot;has_merged_headers&quot;,&quot;has_decorative_elements&quot;,&quot;has_annotations_outside_table&quot;,&quot;layout_description&quot;,&quot;issues&quot;:[...]}], &quot;overall_quality&quot;: &quot;good/fair/poor&quot;}</code><br><span class="cite">解析: harunobu/core/ai_visual_analyzer.py:341-344</span></p>
+</section>
+  <h3 style="margin-top:12px">どのルールからも呼ばれていないメソッド</h3>
+  <p>以下は harunobu/ 配下に呼び出し元がありません。プロンプトの中身を見るために、サンプルのデータを入れて直接呼び出しました。</p>
+  
+<section class="method" id="batch_check_code_needs_table">
+  <header class="mh">
+    <h3><code>batch_check_code_needs_table</code></h3>
+    <span class="pill direct">直接呼び出し</span>
+  </header>
+  <p class="purpose">複数列について、コード値を含みコード表が別途必要かを判定させる。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>（なし）</dd></div>
+    <div><dt>モード</dt><dd>—</dd></div>
+    <div><dt>表データの表現</dt><dd>列ごとに「ヘッダー + 値 10 個」</dd></div>
+    <div><dt>共通前置き</dt><dd>あり</dd></div>
+    <div><dt>この例の出所</dt><dd>直接呼び出し（direct call）: rule_19_normalize_nominals.xlsx / OK 列「設問1コード」+ rule_07_one_cell_one_data.xlsx / OK 列「区分」</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre><span class="ctx">あなたは日本の行政データを分析するエキスパートです。
+対象データは以下のような行政機関のExcelファイルです:
+- こども家庭庁（保育所・福祉データ）
+- 厚生労働省（医療・介護・雇用データ）
+- 文部科学省（教育データ）
+- 総務省（地方財政・水道事業データ）
+
+行政データ特有の表現:
+- 秘匿値: 「-」「×」「…」「＊」「－」（個人情報保護上の非公開）
+- 単位省略: 「（百万円）」をヘッダーに記載し数値列は単位なし
+- 年度表記: 「令和5年度」「R5」「2023年度」が混在することがある
+- 地域コード: JIS X 0401/0402 準拠の都道府県・市区町村コード
+- 「0」始まりコード: 都道府県コード「01」等は文字列として保持すべき
+</span>
+以下の複数の列について、それぞれコード値を含んでいてコード表が必要か判断してください。
+
+  [0] ヘッダー: 「設問1コード」, 値: 2, 2, 1, 2, 3, 2, 2, 2, 2, 2
+  [1] ヘッダー: 「区分」, 値: 総計, A, B, C, D, E, F, G, H
+
+コード表が必要な例: 性別コード（1=男,2=女）, 市区町村コード, 産業分類コード
+コード表が不要な例: 人数・件数, 年度, 順位, 都道府県名
+
+JSON回答（インデックス順の配列）:
+[{&quot;needs_code_table&quot;: true/false, &quot;code_type&quot;: &quot;コードの種類&quot;, &quot;explanation&quot;: &quot;判断理由&quot;}]</pre></div>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>値は [:10]（harunobu/core/ai_semantic_checker.py:205）。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>[{&quot;needs_code_table&quot;: bool, &quot;code_type&quot;: str, &quot;explanation&quot;: str}]</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:220-236</span></p>
+</section>
+<section class="method" id="batch_check_special_symbol_intents">
+  <header class="mh">
+    <h3><code>batch_check_special_symbol_intents</code></h3>
+    <span class="pill direct">直接呼び出し</span>
+  </header>
+  <p class="purpose">「-」「▲」などの記号が統計マーカー（秘匿・該当なし）か通常データかを記号ごとに判定させる。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>（なし）</dd></div>
+    <div><dt>モード</dt><dd>—</dd></div>
+    <div><dt>表データの表現</dt><dd>記号・列名・数値割合・サンプル値 15 個（repr）</dd></div>
+    <div><dt>共通前置き</dt><dd>あり</dd></div>
+    <div><dt>この例の出所</dt><dd>直接呼び出し（direct call）: rule_16_number_column.xlsx / NG-01 列「利益」記号 &#x27;▲&#x27; ほか</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre><span class="ctx">あなたは日本の行政データを分析するエキスパートです。
+対象データは以下のような行政機関のExcelファイルです:
+- こども家庭庁（保育所・福祉データ）
+- 厚生労働省（医療・介護・雇用データ）
+- 文部科学省（教育データ）
+- 総務省（地方財政・水道事業データ）
+
+行政データ特有の表現:
+- 秘匿値: 「-」「×」「…」「＊」「－」（個人情報保護上の非公開）
+- 単位省略: 「（百万円）」をヘッダーに記載し数値列は単位なし
+- 年度表記: 「令和5年度」「R5」「2023年度」が混在することがある
+- 地域コード: JIS X 0401/0402 準拠の都道府県・市区町村コード
+- 「0」始まりコード: 都道府県コード「01」等は文字列として保持すべき
+</span>
+以下の複数の記号について、それぞれ統計データの特殊マーカーか通常データか判断してください。
+
+  [0] 記号: &#x27;▲&#x27;, 列名: 「利益」, 数値割合: 60%, サンプル値: &#x27;150000&#x27;, &#x27;50000&#x27;, &#x27;▲50,000&#x27;, &#x27;▲50,000&#x27;, &#x27;150000&#x27;
+  [1] 記号: &#x27;(&#x27;, 列名: 「利益」, 数値割合: 60%, サンプル値: &#x27;150000&#x27;, &#x27;50000&#x27;, &#x27;(50000)&#x27;, &#x27;(50000)&#x27;, &#x27;150000&#x27;
+
+A) 統計マーカー（欠損値・秘匿・不詳・該当なし等）
+B) 通常データ（負の数を示す &#x27;-&#x27;、テキストの一部等）
+
+JSON回答（インデックス順の配列）:
+[{&quot;is_statistical_marker&quot;: true/false, &quot;likely_meaning&quot;: &quot;推定意味&quot;, &quot;confidence&quot;: 0.0から1.0}]</pre></div>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>数値割合は渡した値全体から計算し、サンプルは [:15] を repr で（harunobu/core/ai_semantic_checker.py:251-260）。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>[{&quot;is_statistical_marker&quot;: bool, &quot;likely_meaning&quot;: str, &quot;confidence&quot;: float}]</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:273-289</span></p>
+</section>
+<section class="method" id="batch_normalize_time_values">
+  <header class="mh">
+    <h3><code>batch_normalize_time_values</code></h3>
+    <span class="pill direct">直接呼び出し</span>
+  </header>
+  <p class="purpose">和暦略称などの時間軸の値を西暦に正規化させる。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>（なし）</dd></div>
+    <div><dt>モード</dt><dd>—</dd></div>
+    <div><dt>表データの表現</dt><dd>値を列名付きで 1 行ずつ</dd></div>
+    <div><dt>共通前置き</dt><dd>あり</dd></div>
+    <div><dt>この例の出所</dt><dd>直接呼び出し（direct call）: rule_16_number_column.xlsx / OK 列「年月」+ rule_04_extraneous_info.xlsx / OK ヘッダー行</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre><span class="ctx">あなたは日本の行政データを分析するエキスパートです。
+対象データは以下のような行政機関のExcelファイルです:
+- こども家庭庁（保育所・福祉データ）
+- 厚生労働省（医療・介護・雇用データ）
+- 文部科学省（教育データ）
+- 総務省（地方財政・水道事業データ）
+
+行政データ特有の表現:
+- 秘匿値: 「-」「×」「…」「＊」「－」（個人情報保護上の非公開）
+- 単位省略: 「（百万円）」をヘッダーに記載し数値列は単位なし
+- 年度表記: 「令和5年度」「R5」「2023年度」が混在することがある
+- 地域コード: JIS X 0401/0402 準拠の都道府県・市区町村コード
+- 「0」始まりコード: 都道府県コード「01」等は文字列として保持すべき
+</span>
+以下の複数の時間軸の値を西暦の標準形式に正規化してください。
+
+  [0] 列「年月」: 「2025-01-01 00:00:00」
+  [1] 列「年月」: 「2025-02-01 00:00:00」
+  [2] 列「年月」: 「2025-03-01 00:00:00」
+  [3] 列「（ヘッダー行）」: 「2020年」
+  [4] 列「（ヘッダー行）」: 「2021年」
+  [5] 列「（ヘッダー行）」: 「2022年」
+
+和暦の換算: 明治+1867, 大正+1911, 昭和+1925, 平成+1988, 令和+2018
+正規化できない場合は normalized=&quot;&quot; としてください。
+
+JSON回答（インデックス順の配列）:
+[{&quot;normalized&quot;: &quot;正規化後の値&quot;, &quot;original_era&quot;: &quot;元号&quot;, &quot;confidence&quot;: 0.0から1.0}]</pre></div>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>件数上限なし（harunobu/core/ai_semantic_checker.py:395）。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>[{&quot;normalized&quot;: str, &quot;original_era&quot;: str, &quot;confidence&quot;: float}]</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:408-424</span></p>
+</section>
+<section class="method" id="check_special_symbol_intent">
+  <header class="mh">
+    <h3><code>check_special_symbol_intent</code></h3>
+    <span class="pill direct">直接呼び出し</span>
+  </header>
+  <p class="purpose">batch_check_special_symbol_intents の 1 記号版。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>（なし）</dd></div>
+    <div><dt>モード</dt><dd>—</dd></div>
+    <div><dt>表データの表現</dt><dd>記号・列名・サンプル値 20 個・数値割合</dd></div>
+    <div><dt>共通前置き</dt><dd>あり</dd></div>
+    <div><dt>この例の出所</dt><dd>直接呼び出し（direct call）: rule_16_number_column.xlsx / NG-01 列「利益」記号 &#x27;▲&#x27;</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre><span class="ctx">あなたは日本の行政データを分析するエキスパートです。
+対象データは以下のような行政機関のExcelファイルです:
+- こども家庭庁（保育所・福祉データ）
+- 厚生労働省（医療・介護・雇用データ）
+- 文部科学省（教育データ）
+- 総務省（地方財政・水道事業データ）
+
+行政データ特有の表現:
+- 秘匿値: 「-」「×」「…」「＊」「－」（個人情報保護上の非公開）
+- 単位省略: 「（百万円）」をヘッダーに記載し数値列は単位なし
+- 年度表記: 「令和5年度」「R5」「2023年度」が混在することがある
+- 地域コード: JIS X 0401/0402 準拠の都道府県・市区町村コード
+- 「0」始まりコード: 都道府県コード「01」等は文字列として保持すべき
+</span>
+スプレッドシートの「利益」列に記号 &#x27;▲&#x27; が含まれています。
+列のサンプル値: &#x27;150000&#x27;, &#x27;50000&#x27;, &#x27;▲50,000&#x27;, &#x27;▲50,000&#x27;, &#x27;150000&#x27;
+列の数値割合: 60%
+
+この &#x27;▲&#x27; は:
+A) 統計データの特殊マーカー（欠損値・秘匿・不詳・該当なしなど）
+B) 通常のデータ（負の数を示す &#x27;-&#x27;、テキストの一部など）
+
+どちらとして使われているか判断してください。
+
+実例（FP回避パターン）:
+- 「-」が列「経常収支比率(%)」にある → 数値列の「-」は秘匿値（統計マーカー）
+- 「-」が列「備考」にある → テキスト列の「-」は通常の区切り（統計マーカーではない）
+- 「×」が列「保育所定員」にある → 秘匿値（統計マーカー）
+- 「0」が列「件数」にある → 通常の数値（統計マーカーではない）
+
+JSON回答:
+{&quot;is_statistical_marker&quot;: true/false,
+&quot;likely_meaning&quot;: &quot;推定意味（例: 該当なし, 秘匿, 負の値）&quot;, &quot;confidence&quot;: 0.0から1.0}</pre></div>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>サンプルは [:20] を '…' で囲んで連結（harunobu/core/ai_semantic_checker.py:550-557）。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>{&quot;is_statistical_marker&quot;: bool, &quot;likely_meaning&quot;: str, &quot;confidence&quot;: float}</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:580-588</span></p>
+</section>
+<section class="method" id="infer_unit_from_header">
+  <header class="mh">
+    <h3><code>infer_unit_from_header</code></h3>
+    <span class="pill direct">直接呼び出し</span>
+  </header>
+  <p class="purpose">batch_infer_units_from_headers の 1 列版。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>（なし）</dd></div>
+    <div><dt>モード</dt><dd>—</dd></div>
+    <div><dt>表データの表現</dt><dd>ヘッダー + サンプル値 5 個</dd></div>
+    <div><dt>共通前置き</dt><dd>あり</dd></div>
+    <div><dt>この例の出所</dt><dd>直接呼び出し（direct call）: rule_25_data_units.xlsx / NG-01 列「数値1」</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre><span class="ctx">あなたは日本の行政データを分析するエキスパートです。
+対象データは以下のような行政機関のExcelファイルです:
+- こども家庭庁（保育所・福祉データ）
+- 厚生労働省（医療・介護・雇用データ）
+- 文部科学省（教育データ）
+- 総務省（地方財政・水道事業データ）
+
+行政データ特有の表現:
+- 秘匿値: 「-」「×」「…」「＊」「－」（個人情報保護上の非公開）
+- 単位省略: 「（百万円）」をヘッダーに記載し数値列は単位なし
+- 年度表記: 「令和5年度」「R5」「2023年度」が混在することがある
+- 地域コード: JIS X 0401/0402 準拠の都道府県・市区町村コード
+- 「0」始まりコード: 都道府県コード「01」等は文字列として保持すべき
+</span>
+スプレッドシートの列「数値1」はデータ単位が明記・推定可能ですか？
+サンプル値: 12.4, 18.9, 25, 9.6
+
+判断基準:
+- ヘッダーに「（円）」「（人）」などの単位が括弧内に記載 → 単位あり
+- ヘッダー名から単位が自明:
+  - 「人口」「利用者数」→ 人
+  - 「金額」「費用」「予算」→ 円
+  - 「受診率」「普及率」「割合」→ %
+  - 「面積」→ ㎡ or ha
+  - 「飼養頭数」→ 頭
+  - 「DI値」→ 指数（単位なし）
+  - 「延べ床面積」→ ㎡
+- ヘッダーが「A」「B」など単位が推定不可能 → 単位なし
+
+JSON回答:
+{&quot;has_unit&quot;: true/false, &quot;inferred_unit&quot;: &quot;推定単位またはnull&quot;, &quot;explanation&quot;: &quot;判断理由&quot;}</pre></div>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>[:5]（harunobu/core/ai_semantic_checker.py:660）。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>{&quot;has_unit&quot;: bool, &quot;inferred_unit&quot;: str|null, &quot;explanation&quot;: str}</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:681-689</span></p>
+</section>
+<section class="method" id="check_code_needs_table">
+  <header class="mh">
+    <h3><code>check_code_needs_table</code></h3>
+    <span class="pill direct">直接呼び出し</span>
+  </header>
+  <p class="purpose">batch_check_code_needs_table の 1 列版。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>（なし）</dd></div>
+    <div><dt>モード</dt><dd>—</dd></div>
+    <div><dt>表データの表現</dt><dd>ヘッダー + 値 10 個</dd></div>
+    <div><dt>共通前置き</dt><dd>あり</dd></div>
+    <div><dt>この例の出所</dt><dd>直接呼び出し（direct call）: rule_19_normalize_nominals.xlsx / OK 列「設問1コード」</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre><span class="ctx">あなたは日本の行政データを分析するエキスパートです。
+対象データは以下のような行政機関のExcelファイルです:
+- こども家庭庁（保育所・福祉データ）
+- 厚生労働省（医療・介護・雇用データ）
+- 文部科学省（教育データ）
+- 総務省（地方財政・水道事業データ）
+
+行政データ特有の表現:
+- 秘匿値: 「-」「×」「…」「＊」「－」（個人情報保護上の非公開）
+- 単位省略: 「（百万円）」をヘッダーに記載し数値列は単位なし
+- 年度表記: 「令和5年度」「R5」「2023年度」が混在することがある
+- 地域コード: JIS X 0401/0402 準拠の都道府県・市区町村コード
+- 「0」始まりコード: 都道府県コード「01」等は文字列として保持すべき
+</span>
+スプレッドシートの列「設問1コード」の値: 2, 2, 1, 2, 3, 2, 2, 2, 2, 2
+
+この列はコード値を含んでいて、コードと意味の対応表（コード表）が別途必要ですか？
+
+コード表が必要な例:
+- 性別コード（1=男, 2=女）
+- 産業分類コード（A=農業, B=林業...）
+- 市区町村コード（131016=千代田区）
+- 学校種別コード（1=小学校, 2=中学校）
+- 福祉サービス区分コード
+
+コード表が不要な例:
+- 人数・件数（数値だがコードではない）
+- 年度（2020, 2021...）
+- 順位（1, 2, 3...）
+- 都道府県名（コードでなく名称）
+
+JSON回答:
+{&quot;needs_code_table&quot;: true/false, &quot;code_type&quot;: &quot;コードの種類（例: 性別コード）&quot;, &quot;explanation&quot;: &quot;判断理由&quot;}</pre></div>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>[:10]（harunobu/core/ai_semantic_checker.py:704）。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>{&quot;needs_code_table&quot;: bool, &quot;code_type&quot;: str, &quot;explanation&quot;: str}</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:727-735</span></p>
+</section>
+<section class="method" id="check_unit_in_cell">
+  <header class="mh">
+    <h3><code>check_unit_in_cell</code></h3>
+    <span class="pill direct">直接呼び出し</span>
+  </header>
+  <p class="purpose">batch_check_unit_in_cells の 1 セル版。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>（なし）</dd></div>
+    <div><dt>モード</dt><dd>—</dd></div>
+    <div><dt>表データの表現</dt><dd>列ヘッダー + セル値 1 つ</dd></div>
+    <div><dt>共通前置き</dt><dd>なし</dd></div>
+    <div><dt>この例の出所</dt><dd>直接呼び出し（direct call）: rule_16_number_column.xlsx / NG-02 列「費用」</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre>以下のセル値に数値と単位が混在していないか分析してください。
+
+列ヘッダー: 「費用」
+セル値: 「350000円」
+
+行政データでは以下のような単位混在パターンがあります:
+- 「約1,200名（前年比+2%）」→ 数値部分=&quot;1200&quot;, 単位部分=&quot;名&quot;
+- 「500千円」→ 数値部分=&quot;500&quot;, 単位部分=&quot;千円&quot;
+- 「3.5%」→ 数値部分=&quot;3.5&quot;, 単位部分=&quot;%&quot;
+- 「120人」→ 数値部分=&quot;120&quot;, 単位部分=&quot;人&quot;
+- 「▲10」→ 数値部分=&quot;-10&quot;, 単位部分=&quot;&quot;（単位なし、符号のみ）
+- 「1,234」→ 数値部分=&quot;1234&quot;, 単位部分=&quot;&quot;（純粋な数値）
+
+単位が含まれている場合は has_unit=true としてください。
+秘匿値（「x」「*」「-」など）や純粋な文字列は has_unit=false としてください。
+
+JSON回答:
+{&quot;has_unit&quot;: true/false, &quot;numeric_part&quot;: &quot;数値部分&quot;, &quot;unit_part&quot;: &quot;単位部分&quot;, &quot;confidence&quot;: 0.0から1.0}</pre></div>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>共通前置きなし。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>{&quot;has_unit&quot;: bool, &quot;numeric_part&quot;: str, &quot;unit_part&quot;: str, &quot;confidence&quot;: float}</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:772-781</span></p>
+</section>
+<section class="method" id="check_other_detail_mixed">
+  <header class="mh">
+    <h3><code>check_other_detail_mixed</code></h3>
+    <span class="pill direct">直接呼び出し</span>
+  </header>
+  <p class="purpose">batch_check_other_detail_mixed の 1 セル版。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>（なし）</dd></div>
+    <div><dt>モード</dt><dd>—</dd></div>
+    <div><dt>表データの表現</dt><dd>列ヘッダー + セル値 1 つ</dd></div>
+    <div><dt>共通前置き</dt><dd>なし</dd></div>
+    <div><dt>この例の出所</dt><dd>直接呼び出し（direct call）: rule_20_split_other.xlsx / NG-01 列「設問1」</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre>以下のセル値が「その他」と詳細情報の混在パターンかを判定してください。
+
+列ヘッダー: 「設問1」
+セル値: 「4. その他: 対象となる事務を他団体に委託しているため」
+
+混在パターンの例:
+- 「その他_駐車場利用」→ その他部分=&quot;その他&quot;, 詳細部分=&quot;駐車場利用&quot;
+- 「その他（施設管理）」→ その他部分=&quot;その他&quot;, 詳細部分=&quot;施設管理&quot;
+- 「その他・雑費」→ その他部分=&quot;その他&quot;, 詳細部分=&quot;雑費&quot;
+- 「Other_parking」→ その他部分=&quot;Other&quot;, 詳細部分=&quot;parking&quot;
+
+混在でない例:
+- 「その他」→ 単独なので混在でない
+- 「駐車場利用」→ 「その他」を含まないので混在でない
+- 「その他の経費」→ 文脈により列名として自然な場合は混在でない
+
+JSON回答:
+{&quot;is_mixed&quot;: true/false, &quot;other_part&quot;: &quot;その他部分&quot;, &quot;detail_part&quot;: &quot;詳細部分&quot;, &quot;confidence&quot;: 0.0から1.0}</pre></div>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>共通前置きなし。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>{&quot;is_mixed&quot;: bool, &quot;other_part&quot;: str, &quot;detail_part&quot;: str, &quot;confidence&quot;: float}</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:818-827</span></p>
+</section>
+<section class="method" id="normalize_time_value">
+  <header class="mh">
+    <h3><code>normalize_time_value</code></h3>
+    <span class="pill direct">直接呼び出し</span>
+  </header>
+  <p class="purpose">batch_normalize_time_values の 1 値版。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>（なし）</dd></div>
+    <div><dt>モード</dt><dd>—</dd></div>
+    <div><dt>表データの表現</dt><dd>列ヘッダー + 値 1 つ</dd></div>
+    <div><dt>共通前置き</dt><dd>なし</dd></div>
+    <div><dt>この例の出所</dt><dd>直接呼び出し（direct call）: rule_16_number_column.xlsx / OK 列「年月」</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre>以下の時間軸の値を西暦の標準形式に正規化してください。
+
+列ヘッダー: 「年月」
+値: 「2025-01-01 00:00:00」
+
+正規化の例:
+- 「H29」→ normalized=&quot;2017&quot;, original_era=&quot;平成&quot;
+- 「R3」→ normalized=&quot;2021&quot;, original_era=&quot;令和&quot;
+- 「S60」→ normalized=&quot;1985&quot;, original_era=&quot;昭和&quot;
+- 「平成29年度」→ normalized=&quot;2017&quot;, original_era=&quot;平成&quot;
+- 「令和3年」→ normalized=&quot;2021&quot;, original_era=&quot;令和&quot;
+- 「2020年度」→ normalized=&quot;2020&quot;, original_era=&quot;&quot;
+- 「2020Q1」→ normalized=&quot;2020-Q1&quot;, original_era=&quot;&quot;
+- 「4月」→ normalized=&quot;04&quot;, original_era=&quot;&quot;
+
+和暦の換算:
+- 明治: 年+1867
+- 大正: 年+1911
+- 昭和: 年+1925
+- 平成: 年+1988
+- 令和: 年+2018
+
+正規化できない場合は normalized=&quot;&quot; としてください。
+
+JSON回答:
+{&quot;normalized&quot;: &quot;正規化後の値&quot;, &quot;original_era&quot;: &quot;元号（和暦の場合）&quot;, &quot;confidence&quot;: 0.0から1.0}</pre></div>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>共通前置きなし（batch 版には付く）。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>{&quot;normalized&quot;: str, &quot;original_era&quot;: str, &quot;confidence&quot;: float}</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:871-879</span></p>
+</section>
+<section class="method" id="check_metadata_quality">
+  <header class="mh">
+    <h3><code>check_metadata_quality</code></h3>
+    <span class="pill direct">直接呼び出し</span>
+  </header>
+  <p class="purpose">ヘッダーと検出済みメタデータ項目（出典・作成日など）から、メタデータの充実度を 0〜1 で採点させる。</p>
+  <dl class="facts">
+    <div><dt>呼び出し元</dt><dd>（なし）</dd></div>
+    <div><dt>モード</dt><dd>—</dd></div>
+    <div><dt>表データの表現</dt><dd>ヘッダー（最大 30）+ メタデータ項目の文字列</dd></div>
+    <div><dt>共通前置き</dt><dd>なし</dd></div>
+    <div><dt>この例の出所</dt><dd>直接呼び出し（direct call）: rule_04_extraneous_info.xlsx / NG-01 ヘッダー + 表外テキスト</dd></div>
+  </dl>
+  
+  <div class="pre-wrap"><pre>行政データのメタデータ品質を評価してください。
+
+テーブルのヘッダー: &#x27;都道府県&#x27;, &#x27;2020年&#x27;, &#x27;2021年&#x27;, &#x27;2022年&#x27;, &#x27;2023年&#x27;, &#x27;2024年&#x27;, &#x27;※このデータは暫定値です&#x27;
+検出されたメタデータ項目: &#x27;※このデータは暫定値です&#x27;, &#x27;出典：総務省統計局&#x27;, &#x27;作成者：山田太郎&#x27;, &#x27;最終更新：2024/3/15&#x27;
+
+行政データに必要なメタデータ:
+- タイトル（データの名称）
+- 出典（作成機関・調査名）
+- 作成日・更新日
+- 単位（数値列の単位）
+- 対象期間（調査対象の期間）
+- 対象地域（調査対象の地域）
+- 用語の定義（専門用語の説明）
+- 注記・凡例（秘匿記号の説明等）
+
+品質スコアは 0.0（メタデータなし）〜 1.0（十分なメタデータ）で評価してください。
+不足している重要なメタデータ項目をリストアップし、改善提案をしてください。
+
+JSON回答:
+{&quot;quality_score&quot;: 0.0から1.0, &quot;missing_items&quot;: [&quot;不足項目1&quot;, &quot;不足項目2&quot;],
+&quot;suggestions&quot;: [&quot;改善提案1&quot;, &quot;改善提案2&quot;]}</pre></div>
+  
+  <h4>データの切り詰め・整形</h4>
+  <ul class="notes"><li>ヘッダーは [:30]、メタデータ項目は全部（harunobu/core/ai_semantic_checker.py:897-898）。共通前置きなし。</li></ul>
+  <h4>期待される応答 JSON</h4>
+  <p class="expect"><code>{&quot;quality_score&quot;: float, &quot;missing_items&quot;: [str], &quot;suggestions&quot;: [str]}</code><br><span class="cite">解析: harunobu/core/ai_semantic_checker.py:922-938</span></p>
+</section>
+</section>
+
+<section class="block">
+  <h2>取得方法と限界</h2>
+  <ul class="notes">
+    <li>実行環境: python:3.12-slim に uv.lock どおりの依存（<code>--extra all --extra dev</code>）、libreoffice-calc、libreoffice-draw、poppler-utils、fonts-noto-cjk を入れたコンテナ。harunobu のコードはすべてコンテナ内で実行しました（ホストで動かしたのはこのページを組み立てる標準ライブラリだけのスクリプトです）。</li>
+    <li>モックサーバは受け取った本文を記録し、メソッドごとに「何も検出しない」最小の JSON を返しました（配列なら <code>[]</code>）。コードを読んだ限り AI の応答で後続の AI 呼び出しが変わる箇所は無いので、送信内容は本物のモデルを使った場合と同じはずですが、応答の中身は本物ではありません。</li>
+    <li>AI 呼び出しはタグ付けのために直列化しました（本来は最大 8 並列）。送る中身には影響しません。</li>
+    <li>直接呼び出しの入力は、サンプルファイルから読んだ実際のセル値です。どの列を選ぶかはこちらで決めました（各節の「この例の出所」に記載）。</li>
+    <li>analyze_sheet_visual の例は、上記の TypeError を避けるため <code>_generate_with_image</code> だけを差し替えて得たものです。出荷コードのままではこのリクエストは送られません。</li>
+    <li>読み込みで拒否されたファイル: rule_01_file_format_NG-03.xlsx（xlsx 拡張子だが中身が PDF）。pdf / docx のサンプルは対象外としました。</li>
+  </ul>
+</section>
+
+</div>
