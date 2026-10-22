@@ -4,7 +4,7 @@
 
 Harunobuの採点エンジンは**決定論的なルールベースの採点**をコアとし、オプションでAI補完機能を利用できます。AI機能はすべて補完的に動作し、無効化されていても基本的な採点機能は動作します。
 
-**マルチプロバイダー対応**: Gemini / OpenAI / Anthropic 等の複数AIプロバイダーに対応しています。`AIClient`（統一クライアント）がLiteLLMまたはgoogle.genaiをバックエンドとして使用します。
+**マルチプロバイダー対応**: Gemini / OpenAI / Anthropic 等の複数AIプロバイダーに加え、OpenAI互換エンドポイント（Ollama / vLLM / LM Studio 等のローカルLLM）にも対応しています。`AIClient`（統一クライアント）がLiteLLMまたはgoogle.genaiをバックエンドとして使用します。
 
 ## 動作モード
 
@@ -78,6 +78,9 @@ AIモードが有効な場合、以下のルールが決定論的チェックに
 | `GOOGLE_CLOUD_PROJECT` | GCPプロジェクトID | — |
 | `GOOGLE_CLOUD_LOCATION` | GCPリージョン | `asia-northeast1` |
 | `OPENAI_API_KEY` | OpenAI APIキー | — |
+| `HARUNOBU_AI_API_BASE` | OpenAI互換エンドポイントのURL（例: `http://localhost:11434/v1`）。`provider=openai` 時は `OPENAI_BASE_URL` / `OPENAI_API_BASE` も読む（こちらが優先） | — |
+| `HARUNOBU_AI_API_KEY` | エンドポイント用APIキー。未設定かつ `HARUNOBU_AI_API_BASE` 指定時は `OPENAI_API_KEY`、それも無ければダミーキー | — |
+| `HARUNOBU_AI_JSON_MODE` | `0` で `response_format={"type":"json_object"}` を送らない（非対応サーバ向け） | `1` |
 | `ANTHROPIC_API_KEY` | Anthropic APIキー | — |
 
 ### セットアップ
@@ -121,6 +124,30 @@ HARUNOBU_AI_PROVIDER=openai
 OPENAI_API_KEY=your-api-key-here
 # HARUNOBU_AI_MODEL=gpt-4o  # デフォルト: gpt-4o
 ```
+
+#### 2c'. OpenAI互換エンドポイント（ローカルLLM）を使用する場合
+
+LiteLLM が必要です（`uv sync --extra ai`）。`HARUNOBU_AI_PROVIDER=openai` のまま接続先URLを差し替えます。
+
+```
+HARUNOBU_AI_PROVIDER=openai
+HARUNOBU_AI_API_BASE=http://localhost:11434/v1   # Ollama
+# HARUNOBU_AI_API_BASE=http://localhost:8000/v1  # vLLM
+# HARUNOBU_AI_API_BASE=http://localhost:1234/v1  # LM Studio
+# HARUNOBU_AI_API_BASE=http://localhost:8080/v1  # llama.cpp server
+HARUNOBU_AI_MODEL=qwen2.5:7b                      # サーバ側のモデル名をそのまま
+# HARUNOBU_AI_API_KEY=...                         # キー不要なサーバなら省略可
+```
+
+注意点:
+
+- モデル名はサーバが受け付ける名前をそのまま指定します。`Qwen/Qwen2.5-7B-Instruct` のように `/` を含んでもそのまま送られます。
+- `response_format={"type":"json_object"}` に対応していないサーバ（LM Studio 等でエラーになる場合）は `HARUNOBU_AI_JSON_MODE=0` を設定してください。プロンプト側でJSON出力を指示しているため、多くのモデルはそのままJSONを返します。
+- Qwen3 / DeepSeek-R1 等が応答先頭に出力する `<think>…</think>` は自動で除去してから JSON として解釈します。
+- AIVisualAnalyzer は画像を送るため、ビジョン対応モデルが必要です。非対応モデルではエラーがログに記録され、そのチェックだけスキップされます。
+- Docker コンテナからホスト上のLLMサーバに接続する場合、`localhost` ではなく `host.docker.internal`（Linux では `--add-host=host.docker.internal:host-gateway` を付与）を指定してください。
+- AIメトリクスの推定コストは料金表に無いモデルに既定単価を当てるため、ローカルLLMでも金額が表示されます（実費ではありません）。
+- `HARUNOBU_AI_API_BASE` は LiteLLM バックエンドでのみ有効です（google.genai バックエンドでは無視され、警告がログに出ます）。
 
 #### 2d. Anthropic を使用する場合
 
@@ -180,7 +207,8 @@ LibreOfficeがインストールされていない場合、AIVisualAnalyzerは�
 
 1. `.env` ファイルが root ディレクトリにあることを確認
 2. `HARUNOBU_AI_DISABLED` が設定されていないことを確認
-3. `HARUNOBU_AI_PROVIDER` に対応するAPIキーが正しく設定されていることを確認
+3. `HARUNOBU_AI_PROVIDER` に対応するAPIキーが正しく設定されていることを確認（ローカルLLMの場合は `HARUNOBU_AI_API_BASE` のURLに到達できるか `curl $HARUNOBU_AI_API_BASE/models` で確認）
+   - 起動時に `AIClient backend=... api_base=...` がINFOログに出るので、実際に使われている接続先を確認できます
 4. 非Geminiプロバイダーの場合、`litellm` がインストールされていることを確認
 
 ### API呼び出しエラー

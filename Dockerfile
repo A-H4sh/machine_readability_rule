@@ -21,12 +21,12 @@ WORKDIR /app
 USER appuser
 
 COPY --chown=appuser:appuser pyproject.toml README.md uv.lock ./
-RUN uv sync --locked --no-dev --extra ui --no-install-project
+RUN uv sync --locked --no-dev --extra ui --extra ai --no-install-project
 
 COPY --chown=appuser:appuser .streamlit/ .streamlit/
 COPY --chown=appuser:appuser harunobu/ harunobu/
 COPY --chown=appuser:appuser app.py .
-RUN uv sync --locked --no-dev --extra ui
+RUN uv sync --locked --no-dev --extra ui --extra ai
 
 EXPOSE 8080
 CMD ["streamlit", "run", "app.py"]
