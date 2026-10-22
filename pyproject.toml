@@ -1,6 +1,6 @@
 [project]
 name = "harunobu"
-version = "0.2.0"
+version = "0.2.2"
 description = "行政データ（Excel/CSV）の機械可読性を判定するシステム"
 readme = "README.md"
 license = {text = "MIT"}
@@ -60,6 +60,7 @@ packages = ["harunobu"]
 [tool.uv]
 # 直近公開パッケージの取り込みを遅らせ、サプライチェーン攻撃の影響を抑える
 exclude-newer = "14 days"
+exclude-newer-package = { certifi = "2026-10-21T00:00:00Z" }
 
 [tool.ruff]
 line-length = 120
